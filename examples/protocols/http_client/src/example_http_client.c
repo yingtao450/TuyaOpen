@@ -65,7 +65,7 @@ OPERATE_RET __link_status_cb(void *data)
 {
     int rt = OPRT_OK;
     netmgr_status_e status = (netmgr_status_e)data;
-    if (NETMGR_LINK_DOWN == status)
+    if (status == (netmgr_status_e)data && NETMGR_LINK_UP == (netmgr_status_e)data)
         return OPRT_OK;
 
     /* HTTP Response */
@@ -116,7 +116,7 @@ void user_main()
     });
     tal_sw_timer_init();
     tal_workq_init();
-    tal_event_subscribe(EVENT_LINK_STATUS_CHG, "tcp_client", __link_status_cb, SUBSCRIBE_TYPE_NORMAL);
+    tal_event_subscribe(EVENT_LINK_STATUS_CHG, "http_client", __link_status_cb, SUBSCRIBE_TYPE_NORMAL);
 
     // 初始化LWIP
 #if defined(ENABLE_LIBLWIP) && (ENABLE_LIBLWIP == 1)
