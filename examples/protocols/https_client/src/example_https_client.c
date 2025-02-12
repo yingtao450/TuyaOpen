@@ -1,19 +1,19 @@
 /**
- * @file example_http.c
- * @brief Demonstrates HTTP client usage in Tuya SDK applications.
+ * @file example_https_client.c
+ * @brief Demonstrates HTTPS client usage in Tuya SDK applications.
  *
- * This file provides an example of how to use the HTTP client interface provided by the Tuya SDK to send HTTP requests
+ * This file provides an example of how to use the HTTPS client interface provided by the Tuya SDK to send HTTPS requests
  * and handle responses. It includes initializing the SDK, setting up network connections (both WiFi and wired,
  * depending on the configuration), sending a GET request to a specified URL, and handling the response. The example
  * also demonstrates how to handle network link status changes and perform cleanups.
  *
  * Key operations demonstrated in this file:
  * - Initialization of the Tuya SDK and network manager.
- * - Sending an HTTP GET request and receiving a response.
+ * - Sending an HTTPS GET request and receiving a response.
  * - Handling network link status changes.
  * - Cleanup and resource management.
  *
- * This example is intended for developers looking to integrate HTTP communication into their Tuya SDK-based IoT
+ * This example is intended for developers looking to integrate HTTPS communication into their Tuya SDK-based IoT
  * applications, providing a foundation for building applications that interact with web services.
  *
  * @copyright Copyright (c) 2021-2024 Tuya Inc. All Rights Reserved.
@@ -65,6 +65,8 @@
 OPERATE_RET __link_status_cb(void *data)
 {
     int rt = OPRT_OK;
+    const uint8_t *cacert;
+    size_t cacert_len;
     static netmgr_status_e status = NETMGR_LINK_DOWN;
     if (status == (netmgr_status_e)data && NETMGR_LINK_UP == (netmgr_status_e)data)
         return OPRT_OK;
@@ -75,10 +77,16 @@ OPERATE_RET __link_status_cb(void *data)
     /* HTTP headers */
     http_client_header_t headers[] = {{.key = "Content-Type", .value = "application/json"}};
 
+    /* HTTPS cert */
+    TUYA_CALL_ERR_GOTO(tuya_iotdns_query_domain_certs(URL, &cacert, &cacert_len), err_exit);
+
     /* HTTP Request send */
-    PR_DEBUG("http request send!");
+    PR_DEBUG("https request send!");
     http_client_status_t http_status = http_client_request(
-        &(const http_client_request_t){.host = URL,
+        &(const http_client_request_t){.cacert = cacert,
+                                       .cacert_len = cacert_len,
+                                       .host = URL,
+                                       .port = 443,
                                        .method = "GET",
                                        .path = PATH,
                                        .headers = headers,
@@ -94,7 +102,7 @@ OPERATE_RET __link_status_cb(void *data)
         goto err_exit;
     }
 
-    PR_DEBUG_RAW("http_get_example body: \n%s\n", (char *)http_response.body);
+    PR_DEBUG_RAW("https_get_example body: \n%s\n", (char *)http_response.body);
 err_exit:
     http_client_free(&http_response);
 
@@ -118,7 +126,7 @@ void user_main()
     });
     tal_sw_timer_init();
     tal_workq_init();
-    tal_event_subscribe(EVENT_LINK_STATUS_CHG, "http_client", __link_status_cb, SUBSCRIBE_TYPE_NORMAL);
+    tal_event_subscribe(EVENT_LINK_STATUS_CHG, "https_client", __link_status_cb, SUBSCRIBE_TYPE_NORMAL);
 
     // 初始化LWIP
 #if defined(ENABLE_LIBLWIP) && (ENABLE_LIBLWIP == 1)
