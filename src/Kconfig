@@ -4,4 +4,6 @@ menu "configure tuyaopen"
     rsource "liblwip/Kconfig"
     rsource "libtls/Kconfig"
     rsource "tal_system/Kconfig"
+    rsource "liblvgl/Kconfig"
+    rsource "device_driver/Kconfig"
 endmenu
