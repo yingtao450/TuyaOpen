@@ -471,6 +471,12 @@ function flash_exec()
             show "${fore[red]}" "$NOTE"
             continue
         fi
+        DEVICE=$PROJECT_PLATFORM
+
+        PROJECT_CHIP=$(echo "$PROJECT_INFO" | grep -oP '(?<=chip = ).*(?=$)')
+        if [ -n "$PROJECT_CHIP" ]; then
+            DEVICE=$PROJECT_CHIP
+        fi
 
         . $PROJECT_ROOT/.build/$PROJ/cache/using.config
         BIN_FILE=$PROJECT_ROOT/.build/$PROJ/bin/${PROJ}_QIO_${CONFIG_PROJECT_VERSION}.bin
@@ -480,7 +486,7 @@ function flash_exec()
             continue
         fi
 
-        ${TYUTOOL} write -d ${PROJECT_PLATFORM} -f ${BIN_FILE}
+        ${TYUTOOL} write -d ${DEVICE} -f ${BIN_FILE}
     done
 }
 

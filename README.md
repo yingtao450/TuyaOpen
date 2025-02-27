@@ -63,7 +63,7 @@ Additionally, the tos tool can configure the simultaneous compilation of project
 
 ### step3. Compilation
 Select the corresponding project for the current compilation in examples or apps, and then run the following command to compile:
-```shell
+```sh
 $ cd examples/get-started/sample_project
 $ tos build
 ```
@@ -92,7 +92,7 @@ Configure the current project, save and exit after configuration, and then compi
 ## Flashing
 
 ### GUI Tool Flashing
-The `tyutool gui` flashing tool supports serial port flashing for multiple chips such as T2/T3/T5/BK7231N/LN882H, and is compatible with Windows/Linux/macOS operating systems. Please choose the corresponding GUI flashing tool based on your operating system.
+The `tyutool gui` flashing tool supports serial port flashing for multiple chips such as T2/T3/T5/BK7231N/LN882H/ESP32, and is compatible with Windows/Linux/macOS operating systems. Please choose the corresponding GUI flashing tool based on your operating system.
 - Windows: [tyutool_win](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/win_tyutool_gui.tar.gz)
 - Linux: [tyutool_linux.tar](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/tyutool_gui.tar.gz)
 - macOS x86: [tyutool_mac_x86](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/darwin_x86_tyutool_gui.tar.gz)
@@ -102,12 +102,12 @@ The `tyutool gui` flashing tool supports serial port flashing for multiple chips
 You can flash the device with a single command using `tos flash`.
 
 1. In environments like Linux, you need to set the serial port permissions first using the following command; otherwise, an error will occur during execution.
-```shell
+```sh
 $ sudo usermod -aG dialout $USER
 ```
 
 2. Run the `tos flash` command in the directory of the compiled project for one-click flashing. The `tos flash` command will automatically download the corresponding `tyutool` tool based on the current running environment and proceed with the flashing process.
-```shell
+```sh
 $ cd examples/get-started/sample_project
 $ tos flash
 tyutool params:
@@ -164,11 +164,25 @@ Writing: ━━━━━━━━━━━━━━━━━━━━━━━�
 ```
 
 > Note: During the flashing process, you need to enter the boot mode according to the actual situation of the chip before performing serial port flashing.
+> If there is no response from the serial port during the flashing process, please check whether the serial port is correctly selected or if it is being used by another program.
+
+3. The `tos flash` flashing tool is continuously adding support for new chip models. Versions prior to v1.8.0 do not support automatic tool upgrades; subsequent versions will detect upgrades and prompt for an upgrade upon startup.
+You can query the version information using `tos flash --version`,
+```sh
+$ tyutool params: --version
+tyuTool, version 1.8.3
+```
+
+For versions prior to v1.8.0, you need to manually run the following command to upgrade:
+
+```sh
+$ tos flash upgrade
+```
 
 ## Sample Projects
 The tuyaopen provides a variety of sample projects to facilitate developers in quickly getting started and understanding the usage of the tuyaopen.
 
-```shell
+```sh
 $ tuyaopen
 ├── ai
 │   └── llm_demo

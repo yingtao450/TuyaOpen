@@ -62,7 +62,7 @@ chip = bk7231n
 
 ### step3. 编译
 选择当前编译的 examples 或 apps 对应工程，运行如下命令编译：
-```shell
+```sh
 $ cd examples/get-started/sample_project
 $ tos build
 ```
@@ -85,7 +85,7 @@ $ tos menuconfig
 
 ## 烧录
 ### GUI 工具烧录
-tyutool gui 烧录工具已支持 T2/T3/T5/BK7231N/LN882H 等多种芯片串口烧录，支持 windows/Linux/macOS 等操作系统，请根据运行操作系统选择对应的 GUI 烧录工具。
+tyutool gui 烧录工具已支持 T2/T3/T5/BK7231N/LN882H/ESP32 等多种芯片串口烧录，支持 windows/Linux/macOS 等操作系统，请根据运行操作系统选择对应的 GUI 烧录工具。
 - windows：[tyutool_win](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/win_tyutool_gui.tar.gz)
 - Linux：[tyutool_linux.tar](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/tyutool_gui.tar.gz)
 - macOS_x86：[tyutool_mac_x86](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/darwin_x86_tyutool_gui.tar.gz)
@@ -95,12 +95,12 @@ tyutool gui 烧录工具已支持 T2/T3/T5/BK7231N/LN882H 等多种芯片串口�
 可通过 tos flash 命令一键烧录
 
 1. 在 Linux 环境下需要先使用如下命令设置串口权限，否则运行会报错。
-```shell
+```sh
 $ sudo usermod -aG dialout $USER
 ```
 
 2. 在需要编译完成后的项目中运行 tos flash 命令一键烧录，tos flash 会根据当前运行的环境自动下载对应的 tyutool 工具，并自动烧录。
-```shell
+```sh
 $ cd examples/get-started/sample_project
 $ tos flash
 tyutool params:
@@ -157,6 +157,19 @@ Writing: ━━━━━━━━━━━━━━━━━━━━━━━�
 ```
 
 > 注：烧录过程中需要根据芯片实际情况进入 boot 后才可以进行串口烧录。
+> 烧录过程中如果串口没有响应，请检查串口是否正确选择，或串口是否被其他程序占用。
+
+3. tos flash 烧录工具正在不断新增支持新的芯片型号，v1.8.0 之前的版本不支持自动升级工具，后续版本在启动时会检测升级并提示升级。
+可通过 `tos flash --version` 查询版本情况， 
+```sh
+$ tyutool params: --version
+tyuTool, version 1.8.3
+```
+
+v1.8.0 之前版本需要手工运行以下升级命令升级：
+```shell
+$ tos flash upgrade
+```
 
 ### 支持 platform 列表
 | 名称 | 支持状态 | 介绍 | 调试日志串口 |
@@ -174,7 +187,7 @@ Writing: ━━━━━━━━━━━━━━━━━━━━━━━�
 ## 示例工程
 tuyaopen 提供了丰富的示例工程，方便开发者快速上手，了解 tuyaopen 的使用。
 
-```shell
+```sh
 $ tuyaopen
 ├── ai
 │   └── llm_demo
