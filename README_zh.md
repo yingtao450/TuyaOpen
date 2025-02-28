@@ -196,6 +196,10 @@ $ tuyaopen
 │   └── ble_peripher
 ├── get-started
 │   └── sample_project
+├── graphics
+│   └── lvgl_demo
+├── multimedia
+│   ├── audio
 ├── peripherals
 │   ├── adc
 │   ├── gpio
@@ -206,6 +210,7 @@ $ tuyaopen
 │   └── watchdog
 ├── protocols
 │   ├── http_client
+│   ├── https_client
 │   ├── mqtt
 │   ├── tcp_client
 │   └── tcp_server
