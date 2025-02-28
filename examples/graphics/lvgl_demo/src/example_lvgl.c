@@ -1,19 +1,17 @@
 /**
- * @file example_spi.c
- * @brief SPI driver example for SDK.
+ * @file example_lvgl.c
+ * @brief LVGL (Light and Versatile Graphics Library) example for SDK.
  *
- * This file provides an example implementation of an SPI (Serial Peripheral Interface) driver using the Tuya SDK.
- * It demonstrates the configuration and usage of SPI communication to interact with peripheral devices such as sensors,
- * memory chips, and other microcontrollers. The example covers initializing the SPI bus, configuring SPI parameters
- * (mode, frequency, data bits, bit order), sending data to a peripheral device, and deinitializing the SPI bus after
- * communication is complete.
+ * This file provides an example implementation of using the LVGL library with the Tuya SDK.
+ * It demonstrates the initialization and usage of LVGL for graphical user interface (GUI) development.
+ * The example covers setting up the display port, initializing LVGL, and running a demo application.
  *
- * The SPI driver example aims to help developers understand how to use SPI communication in their Tuya IoT projects for
- * applications requiring high-speed serial data transfer. It includes detailed examples of setting up SPI
- * configurations, handling data transmission, and integrating these functionalities within a multitasking environment.
+ * The LVGL example aims to help developers understand how to integrate LVGL into their Tuya IoT projects for
+ * creating graphical user interfaces on embedded devices. It includes detailed examples of setting up LVGL,
+ * handling display updates, and integrating these functionalities within a multitasking environment.
  *
- * @note This example is designed to be adaptable to various Tuya IoT devices and platforms, showcasing fundamental SPI
- * operations critical for IoT device development.
+ * @note This example is designed to be adaptable to various Tuya IoT devices and platforms, showcasing fundamental LVGL
+ * operations critical for GUI development on embedded systems.
  *
  * @copyright Copyright (c) 2021-2024 Tuya Inc. All Rights Reserved.
  *
