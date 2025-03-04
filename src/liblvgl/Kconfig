@@ -1,7 +1,7 @@
 config ENABLE_LIBLVGL
     bool "configure lvgl"
     select ENABLE_DISPLAY_DRIVER
-    default y
+    default n
 
 if (ENABLE_LIBLVGL)
     config ENABLE_LVGL_DEMO
