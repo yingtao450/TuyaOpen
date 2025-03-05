@@ -46,7 +46,7 @@ tos 命令的详细使用方法，请参考 [tos 命令](./docs/zh/tos_guide.md)
 ### step2. 设置 platform
 tos 工具通过项目工程目录下的 `project_build.ini` 文件配置编译 platform，`project_build.ini` 包括以下字段：
 - project: 项目名称，可自定义，建议工程目录名_<platform/chip name>。
-- platform: 编译目标平台，可选值：ubuntu、t2、t3、t5、esp32、ln882h、bk7231x。该名称与 `platform/platform_config.yaml` 中定义的 name 名称一致。
+- platform: 编译目标平台，可选值：ubuntu、t2、t3、t5ai、esp32、ln882h、bk7231x。该名称与 `platform/platform_config.yaml` 中定义的 name 名称一致。
 - chip: 可选值，当 platform 中支持多 chip 时，需指定 chip 名称。
     - platform 为 esp32 时可选值：esp32、esp32c3。
     - platform 为 bk7231x 时可选值：bk7231n。
@@ -85,7 +85,7 @@ $ tos menuconfig
 
 ## 烧录
 ### GUI 工具烧录
-tyutool gui 烧录工具已支持 T2/T3/T5/BK7231N/LN882H/ESP32 等多种芯片串口烧录，支持 windows/Linux/macOS 等操作系统，请根据运行操作系统选择对应的 GUI 烧录工具。
+tyutool gui 烧录工具已支持 T2/T3/T5AI/BK7231N/LN882H/ESP32 等多种芯片串口烧录，支持 windows/Linux/macOS 等操作系统，请根据运行操作系统选择对应的 GUI 烧录工具。
 - windows：[tyutool_win](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/win_tyutool_gui.tar.gz)
 - Linux：[tyutool_linux.tar](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/tyutool_gui.tar.gz)
 - macOS_x86：[tyutool_mac_x86](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/darwin_x86_tyutool_gui.tar.gz)
@@ -177,7 +177,7 @@ $ tos flash upgrade
 | Ubuntu | 支持 | 可在 ubuntu 等 Linux 主机上直接运行 | |
 | T2 |  支持 | 支持模组列表:  [T2-U](https://developer.tuya.com/cn/docs/iot/T2-U-module-datasheet?id=Kce1tncb80ldq) | Uart2/115200 |
 | T3 |  支持 | 支持模组列表:  [T3-U](https://developer.tuya.com/cn/docs/iot/T3-U-Module-Datasheet?id=Kdd4pzscwf0il) [T3-U-IPEX](https://developer.tuya.com/cn/docs/iot/T3-U-IPEX-Module-Datasheet?id=Kdn8r7wgc24pt) [T3-2S](https://developer.tuya.com/cn/docs/iot/T3-2S-Module-Datasheet?id=Ke4h1uh9ect1s) [T3-3S](https://developer.tuya.com/cn/docs/iot/T3-3S-Module-Datasheet?id=Kdhkyow9fuplc) [T3-E2](https://developer.tuya.com/cn/docs/iot/T3-E2-Module-Datasheet?id=Kdirs4kx3uotg) 等 | Uart1/460800 |
-| T5 |  支持 | 支持模组列表: [T5-E1](https://developer.tuya.com/cn/docs/iot/T5-E1-Module-Datasheet?id=Kdar6hf0kzmfi) [T5-E1-IPEX](https://developer.tuya.com/cn/docs/iot/T5-E1-IPEX-Module-Datasheet?id=Kdskxvxe835tq) 等 | Uart1/460800 |
+| T5AI |  支持 | 支持模组列表: [T5-E1](https://developer.tuya.com/cn/docs/iot/T5-E1-Module-Datasheet?id=Kdar6hf0kzmfi) [T5-E1-IPEX](https://developer.tuya.com/cn/docs/iot/T5-E1-IPEX-Module-Datasheet?id=Kdskxvxe835tq) 等 | Uart1/460800 |
 | ESP32/ESP32C3 | 支持 | | Uart0/115200 |
 | LN882H | 支持 |  | Uart1/921600 |
 | BK7231N | 支持 | 支持模组列表:  [CBU](https://developer.tuya.com/cn/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)  [CB3S](https://developer.tuya.com/cn/docs/iot/cb3s?id=Kai94mec0s076) [CB3L](https://developer.tuya.com/cn/docs/iot/cb3l-module-datasheet?id=Kai51ngmrh3qm) [CB3SE](https://developer.tuya.com/cn/docs/iot/CB3SE-Module-Datasheet?id=Kanoiluul7nl2) [CB2S](https://developer.tuya.com/cn/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq) [CB2L](https://developer.tuya.com/cn/docs/iot/cb2l-module-datasheet?id=Kai2eku1m3pyl) [CB1S](https://developer.tuya.com/cn/docs/iot/cb1s-module-datasheet?id=Kaij1abmwyjq2) [CBLC5](https://developer.tuya.com/cn/docs/iot/cblc5-module-datasheet?id=Ka07iqyusq1wm) [CBLC9](https://developer.tuya.com/cn/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) [CB8P](https://developer.tuya.com/cn/docs/iot/cb8p-module-datasheet?id=Kahvig14r1yk9) 等 | Uart2/115200 |

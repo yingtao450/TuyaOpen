@@ -47,7 +47,7 @@ For detailed usage of the tos command, please refer to [tos command](./docs/en/t
 ### Step 2. Set Platform
 The tos tool configures the build platform through the `project_build.ini` file located in the project's directory. The `project_build.ini` file includes the following fields:
 - project: The name of the project, which can be customized. It is recommended to use the format <project directory name>_<platform/chip name>.
-- platform: The target platform for compilation, with available options including: ubuntu, t2, t3, t5, esp32, ln882h, bk7231x. This name should match the name defined in `platform/platform_config.yaml`.
+- platform: The target platform for compilation, with available options including: ubuntu, t2, t3, t5ai, esp32, ln882h, bk7231x. This name should match the name defined in `platform/platform_config.yaml`.
 - chip: Optional values; when the selected platform supports multiple chips, the specific chip name must be specified.
     - When the platform is set to esp32, the available options are: esp32, esp32c3.
     - When the platform is set to bk7231x, the available options are: bk7231n.
@@ -83,7 +83,7 @@ Configure the current project, save and exit after configuration, and then compi
 | Ubuntu | Supported  | Can be run directly on Linux hosts such as ubuntu. | |
 | T2 |  Supported  | Supported Module List: [T2-U](https://developer.tuya.com/en/docs/iot/T2-U-module-datasheet?id=Kce1tncb80ldq) | Uart2/115200 |
 | T3 |  Supported  | Supported Module List: [T3-U](https://developer.tuya.com/en/docs/iot/T3-U-Module-Datasheet?id=Kdd4pzscwf0il) [T3-U-IPEX](https://developer.tuya.com/en/docs/iot/T3-U-IPEX-Module-Datasheet?id=Kdn8r7wgc24pt) [T3-2S](https://developer.tuya.com/en/docs/iot/T3-2S-Module-Datasheet?id=Ke4h1uh9ect1s) [T3-3S](https://developer.tuya.com/en/docs/iot/T3-3S-Module-Datasheet?id=Kdhkyow9fuplc) [T3-E2](https://developer.tuya.com/en/docs/iot/T3-E2-Module-Datasheet?id=Kdirs4kx3uotg) etc. | Uart1/460800 |
-| T5 | Supported | Supported Module List: [T5-E1](https://developer.tuya.com/en/docs/iot/T5-E1-Module-Datasheet?id=Kdar6hf0kzmfi) [T5-E1-IPEX](https://developer.tuya.com/en/docs/iot/T5-E1-IPEX-Module-Datasheet?id=Kdskxvxe835tq) etc. | Uart1/460800 |
+| T5AI | Supported | Supported Module List: [T5-E1](https://developer.tuya.com/en/docs/iot/T5-E1-Module-Datasheet?id=Kdar6hf0kzmfi) [T5-E1-IPEX](https://developer.tuya.com/en/docs/iot/T5-E1-IPEX-Module-Datasheet?id=Kdskxvxe835tq) etc. | Uart1/460800 |
 | ESP32/ESP32C3 | Supported | | Uart0/115200 |
 | LN882H | Supported |  | Uart1/921600 |
 | BK7231N | Supported | Supported Module List:  [CBU](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)  [CB3S](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076) [CB3L](https://developer.tuya.com/en/docs/iot/cb3l-module-datasheet?id=Kai51ngmrh3qm) [CB3SE](https://developer.tuya.com/en/docs/iot/CB3SE-Module-Datasheet?id=Kanoiluul7nl2) [CB2S](https://developer.tuya.com/en/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq) [CB2L](https://developer.tuya.com/en/docs/iot/cb2l-module-datasheet?id=Kai2eku1m3pyl) [CB1S](https://developer.tuya.com/en/docs/iot/cb1s-module-datasheet?id=Kaij1abmwyjq2) [CBLC5](https://developer.tuya.com/en/docs/iot/cblc5-module-datasheet?id=Ka07iqyusq1wm) [CBLC9](https://developer.tuya.com/en/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) [CB8P](https://developer.tuya.com/en/docs/iot/cb8p-module-datasheet?id=Kahvig14r1yk9) etc. | Uart2/115200 |
@@ -92,7 +92,7 @@ Configure the current project, save and exit after configuration, and then compi
 ## Flashing
 
 ### GUI Tool Flashing
-The `tyutool gui` flashing tool supports serial port flashing for multiple chips such as T2/T3/T5/BK7231N/LN882H/ESP32, and is compatible with Windows/Linux/macOS operating systems. Please choose the corresponding GUI flashing tool based on your operating system.
+The `tyutool gui` flashing tool supports serial port flashing for multiple chips such as T2/T3/T5AI/BK7231N/LN882H/ESP32, and is compatible with Windows/Linux/macOS operating systems. Please choose the corresponding GUI flashing tool based on your operating system.
 - Windows: [tyutool_win](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/win_tyutool_gui.tar.gz)
 - Linux: [tyutool_linux.tar](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/tyutool_gui.tar.gz)
 - macOS x86: [tyutool_mac_x86](https://images.tuyacn.com/smart/embed/package/vscode/data/ide_serial/darwin_x86_tyutool_gui.tar.gz)

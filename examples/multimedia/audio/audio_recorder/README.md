@@ -36,4 +36,4 @@ The WAV format only requires adding a WAV header before the PCM data. The WAV he
 - Ensure that the SD card is correctly formatted and has sufficient storage space.
 - Adjust the GPIO pins and audio parameters according to the actual hardware configuration.
 - The recording duration is limited by the size of the ring buffer and the available space on the storage medium.
-- This example currently uses only T5.
+- This example currently uses only T5AI.
