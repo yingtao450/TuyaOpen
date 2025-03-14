@@ -1,0 +1,12 @@
+config ENABLE_AUDIO_SERVICE
+    bool "configure tuya audio service"
+    select ENABLE_LIB_PROTOBUF_C
+    default n
+
+if (ENABLE_AUDIO_SERVICE)
+
+    rsource "tuya_voice_protocol/Kconfig"
+    rsource "speaker_upload/Kconfig"
+    rsource "speex/Kconfig"
+
+endif
