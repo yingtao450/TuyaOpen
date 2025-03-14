@@ -2,7 +2,7 @@
 
 English | [简体中文](README_zh.md)
 
-The Tuya Cloud Application is an application provided by the Tuya IoT platform, which allows developers to quickly implement features such as remote control and device management.
+The Tuya Cloud Application is an application provided by the Tuya AI+IoT platform, which allows developers to quickly implement features such as remote control and device management.
 
 `switch_demo` demonstrates a simple, cross-platform, cross-system switch example that supports multiple connections. Through the Tuya APP and Tuya Cloud Service, this switch can be remotely controlled.
 

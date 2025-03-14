@@ -24,7 +24,7 @@ A simple, cross-platform, cross-system, and multi-connection switch example. By 
 * qrencode_print.c: print the QRCode in screen or serial tools
 * cli_cmd.c: cli cmmand which used to operater the swith_demo
 * switch_demo.c: the main function of the switch_demo
-* tuya_config.h: the tuya PID and license, to get the license, you need create a product on Tuya IoT Platfrom following [TuyaOS quickstart](https://developer.tuya.com/en/docs/iot-device-dev/application-creation?id=Kbxw7ket3aujc)
+* tuya_config.h: the tuya PID and license, to get the license, you need create a product on Tuya AI+IoT Platfrom following [TuyaOS quickstart](https://developer.tuya.com/en/docs/iot-device-dev/application-creation?id=Kbxw7ket3aujc)
 
 
 

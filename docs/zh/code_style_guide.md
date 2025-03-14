@@ -51,7 +51,7 @@ extern "C" {
  * @brief Header file for TCP transporter functions.
  *
  * This file declares the interface for creating and destroying TCP transporters
- * within the Tuya IoT SDK. A TCP transporter is responsible for establishing
+ * within the Tuya AI+IoT SDK. A TCP transporter is responsible for establishing
  * and managing TCP connections, enabling the transmission of data between Tuya
  * devices and the Tuya cloud platform or other networked services. The
  * functions provided here allow for the creation of a TCP transporter instance
