@@ -1,5 +1,5 @@
 /**
- * @file ai_audio.c
+ * @file tuya_main.c
  * @brief Implements main audio functionality for IoT device
  *
  * This source file provides the implementation of the main audio functionalities
