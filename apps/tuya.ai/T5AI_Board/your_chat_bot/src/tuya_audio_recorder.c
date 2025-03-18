@@ -34,6 +34,7 @@ typedef struct {
     TUYA_AUDIO_RECORDER_CONFIG_T config;
     BOOL_T is_running;
     BOOL_T is_stop;
+    TUYA_TTS_STATE tts_state;
     TUYA_RINGBUFF_T stream_ringbuf;
     MUTEX_HANDLE ringbuf_mutex;
     QUEUE_HANDLE msg_queue;
@@ -162,17 +163,25 @@ static void _tuya_voice_stream_player(TUYA_VOICE_STREAM_E type, uint8_t *data, i
             PR_DEBUG("tts start, request id is not match");
             break;
         }
+
+        s_ctx->tts_state = TTS_STATE_STREAM_START;
+        if (tuya_audio_player_is_playing()) {
+            PR_DEBUG("tts start, player is playing, stop it first");
+            tuya_audio_player_stop();
+        }
+
         tuya_audio_player_start();
         break;
 
     case TUYA_VOICE_STREAM_DATA:
-        if (!cur_request_id || cur_request_id[0] == '\0') {
-            // PR_DEBUG("tts data, but no request id");
+        if (s_ctx->tts_state < TTS_STATE_STREAM_START) {
+            PR_DEBUG("tts data, streaming flag is not set");
             break;
         }
+        s_ctx->tts_state = TTS_STATE_STREAM_DATA;
 
         PR_DEBUG("tts data... len=%d, used size=%d", len, tuya_audio_player_stream_get_size());
-        while (len > 0) {
+        while (tuya_audio_player_is_playing() && len > 0) {
             ret = tuya_audio_player_stream_write((char *)data, len);
             if (ret < 0) {
                 PR_ERR("tkl_player_start_stream_write failed, ret=%d", ret);
@@ -188,29 +197,34 @@ static void _tuya_voice_stream_player(TUYA_VOICE_STREAM_E type, uint8_t *data, i
 
         if (ret < 0) {
             // stream buffer error, drop all pending data
-            _request_id_reset(); // all pending data will be dropped
+            s_ctx->tts_state = TTS_STATE_STREAM_IDLE;
+            PR_DEBUG("ret < 0, tts_state: %d", s_ctx->tts_state);
         }
         break;
 
     case TUYA_VOICE_STREAM_STOP: {
-        if (!cur_request_id || cur_request_id[0] == '\0') {
-            PR_DEBUG("tts stop, but no request id");
+        if (s_ctx->tts_state < TTS_STATE_STREAM_DATA) {
+            PR_DEBUG("tts stop, streaming flag is not set");
             break;
         }
+
         PR_DEBUG("tts stop...");
+
         tuya_audio_player_stream_write(NULL, 0);
-        _request_id_reset();
+        s_ctx->tts_state = TTS_STATE_STREAM_IDLE;
         break;
     }
 
     case TUYA_VOICE_STREAM_ABORT: {
-        if (!cur_request_id || cur_request_id[0] == '\0') {
-            PR_DEBUG("tts abort, but no request id");
+        if (s_ctx->tts_state < TTS_STATE_STREAM_DATA) {
+            PR_DEBUG("tts stop, streaming flag is not set");
             break;
         }
-        PR_DEBUG("tts abort...");
+        PR_DEBUG("tts abort... ");
+
         tuya_audio_player_stop();
         _request_id_reset();
+        s_ctx->tts_state = TTS_STATE_STREAM_IDLE;
         break;
     }
 
@@ -546,7 +560,7 @@ int tuya_audio_recorder_stream_get_size(TUYA_AUDIO_RECORDER_HANDLE handle)
  *         OPRT_OK - Success.
  *         OPRT_COM_ERROR - An error occurred during posting.
  */
-OPERATE_RET ty_ai_voice_stat_post(TUYA_AUDIO_RECORDER_HANDLE handle, TY_AI_VoiceState stat)
+OPERATE_RET ty_ai_voice_stat_post(TUYA_AUDIO_RECORDER_HANDLE handle, TUYA_AUDIO_VOICE_STATE stat)
 {
     OPERATE_RET ret = OPRT_OK;
     tal_mutex_lock(s_mutex);
@@ -560,7 +574,8 @@ OPERATE_RET ty_ai_voice_stat_post(TUYA_AUDIO_RECORDER_HANDLE handle, TY_AI_Voice
     tal_mutex_unlock(s_mutex);
     return ret;
 }
-static OPERATE_RET ty_ai_voice_stat_fetch(TUYA_AUDIO_RECORDER_HANDLE handle, TY_AI_VoiceState *stat, uint32_t timeout)
+static OPERATE_RET ty_ai_voice_stat_fetch(TUYA_AUDIO_RECORDER_HANDLE handle, TUYA_AUDIO_VOICE_STATE *stat,
+                                          uint32_t timeout)
 {
     OPERATE_RET ret = OPRT_OK;
     TUYA_AUDIO_RECORDER_CONTEXT *ctx = (TUYA_AUDIO_RECORDER_CONTEXT *)handle;
@@ -722,15 +737,15 @@ static void _ai_proc_task(void *arg)
     OPERATE_RET ret = OPRT_OK;
     TUYA_AUDIO_RECORDER_CONTEXT *ctx = (TUYA_AUDIO_RECORDER_CONTEXT *)arg;
 
-    TY_AI_VoiceState stat = IN_SILENCE;
+    TUYA_AUDIO_VOICE_STATE stat = VOICE_STATE_IN_SILENCE;
     PR_NOTICE("ai_proc start...");
     PR_NOTICE("ctx = %p", ctx);
 
     while (ctx->is_running) {
         // fetch voice state
-        TY_AI_VoiceState cur_stat = stat;
-        ret = ty_ai_voice_stat_fetch(ctx, &cur_stat, stat == IN_VOICE ? 30 : 100);
-        if (ret != OPRT_OK && stat != IN_VOICE) {
+        TUYA_AUDIO_VOICE_STATE cur_stat = stat;
+        ret = ty_ai_voice_stat_fetch(ctx, &cur_stat, stat == VOICE_STATE_IN_VOICE ? 30 : 100);
+        if (ret != OPRT_OK && stat != VOICE_STATE_IN_VOICE) {
             continue;
         }
         if (ret == OPRT_OK && cur_stat != stat) {
@@ -738,27 +753,28 @@ static void _ai_proc_task(void *arg)
             stat = cur_stat;
         }
         switch (stat) {
-        case IN_SILENCE:
+        case VOICE_STATE_IN_SILENCE:
             PR_NOTICE("voice silence...");
             _voice_tts_interrupt(); // stop current tts
             _request_id_reset();
             break;
 
-        case IN_START:
+        case VOICE_STATE_IN_START:
             PR_NOTICE("voice start...");
+            s_ctx->tts_state = TTS_STATE_STREAM_IDLE;
             ret = _upload_start(ctx);
             break;
 
-        case IN_VOICE:
+        case VOICE_STATE_IN_VOICE:
             ret = _upload_proc(ctx, FALSE);
             break;
 
-        case IN_STOP:
+        case VOICE_STATE_IN_STOP:
             PR_NOTICE("voice stop...");
             ret = _upload_stop(ctx, FALSE);
             break;
 
-        case IN_RESUME:
+        case VOICE_STATE_IN_RESUME:
             PR_NOTICE("voice resume...");
             break;
         default:
