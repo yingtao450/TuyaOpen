@@ -227,7 +227,7 @@ $ tuyaopen
 Each sample project includes a README.md file that provides detailed instructions on configuring, compiling, and running the project.
 
 
-## AI 应用
+## AI Applications
 
 Tuya.ai is a comprehensive AI service platform that provides the following core capabilities:
 
