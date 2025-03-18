@@ -21,8 +21,8 @@ Tuyaopen Framework 包括：
 均采用 TuyaOpen 专用授权码，使用其他授权码无法正常连接涂鸦云。
 
 ```shell
-[switch_demo.c:220] Replace the TUYA_DEVICE_UUID and TUYA_DEVICE_AUTHKEY contents, otherwise the demo cannot work
-[switch_demo.c:222] uuid uuidxxxxxxxxxxxxxxxx, authkey keyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+[tuya_main.c:220] Replace the TUYA_DEVICE_UUID and TUYA_DEVICE_AUTHKEY contents, otherwise the demo cannot work
+[tuya_main.c:222] uuid uuidxxxxxxxxxxxxxxxx, authkey keyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 可通过以下方式获取 TuyaOpen 专用授权码：

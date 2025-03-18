@@ -1,5 +1,5 @@
 /**
- * @file switch_demo.c
+ * @file tuya_main.c
  *
  * @brief a simple switch demo show how to use tuya-open-sdk-for-device to
  * develop a simple switch. 1, download, compile, run in ubuntu according the

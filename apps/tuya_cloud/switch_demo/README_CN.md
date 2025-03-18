@@ -13,7 +13,7 @@
     +- src
         -- cli_cmd.c
         -- qrencode_print.c
-        -- switch_demo.c
+        -- tuya_main.c
         -- tuya_config.h
     -- CMakeLists.txt
     -- README_CN.md
@@ -22,7 +22,7 @@
 * libqrencode: 一个二维码工具库，用于有线网络连接涂鸦云服务时生成二维码，并使用涂鸦 APP 扫描二维码进行绑定
 * qrencode_print.c: 用于在屏幕、串口工具上展示二维码
 * cli_cmd.c: switch_demo 的一些命令行操作，用于查看、操作 switch_demo 的信息和状态
-* switch_demo.c: switch_demo 的主要功能
+* tuya_main.c: switch_demo 的主要功能
 * tuya_config.h: 涂鸦PID和授权信息，在涂鸦IoT平台上创建并获取，可以参考文档 [TuyaOS quickstart](https://developer.tuya.com/en/docs/iot-device-dev/application-creation?id=Kbxw7ket3aujc)
 
 
