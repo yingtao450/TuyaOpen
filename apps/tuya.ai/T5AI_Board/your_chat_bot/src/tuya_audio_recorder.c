@@ -20,12 +20,14 @@
 #include "tkl_gpio.h"
 #include "tuya_ringbuf.h"
 #include "tkl_thread.h"
+#include "tkl_memory.h"
 
 #include "tuya_audio_recorder.h"
 #include "tuya_audio_player.h"
 #include "tuya_audio_debug.h"
 
 #include "tuya_voice_protocol.h"
+#include "tuya_voice_protocol_ws.h"
 #include "speaker_upload.h"
 #include "speex_encode.h"
 #include "wav_encode.h"
@@ -158,7 +160,7 @@ static void _tuya_voice_stream_player(TUYA_VOICE_STREAM_E type, uint8_t *data, i
     // send data to socket
     switch (type) {
     case TUYA_VOICE_STREAM_START:
-        PR_DEBUG("tts start... requestid=%s", data);
+        PR_DEBUG("tts start... requestid=%s", (char *)data);
         if (strcmp(cur_request_id, data) != 0) {
             PR_DEBUG("tts start, request id is not match");
             break;
@@ -235,6 +237,22 @@ static void _tuya_voice_stream_player(TUYA_VOICE_STREAM_E type, uint8_t *data, i
     return;
 }
 
+void _tuya_voice_text_stream(TUYA_VOICE_STREAM_E type, uint8_t *data, int len)
+{
+    switch (type) {
+    case TUYA_VOICE_STREAM_START: {
+    } break;
+
+    case TUYA_VOICE_STREAM_DATA: {
+        PR_DEBUG("voice stream data... %s", data);
+    } break;
+
+    case TUYA_VOICE_STREAM_STOP: {
+    } break;
+    }
+    return;
+}
+
 static OPERATE_RET _tuya_voice_register_extra_mqt_cb(void *data)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -272,6 +290,7 @@ static OPERATE_RET _tuya_player_init(void)
     voice_cbc.tuya_voice_play_tts = __tuya_voice_play_tts;
     voice_cbc.tuya_voice_custom = _tuya_voice_custom;
     voice_cbc.tuya_voice_tts_stream = _tuya_voice_stream_player;
+    voice_cbc.tuya_voice_text_stream = _tuya_voice_text_stream;
     rt = tuya_voice_proto_init(&voice_cbc);
     if (rt != OPRT_OK) {
         PR_ERR("tuya_voice_proto_init failed");
@@ -418,8 +437,6 @@ error:
  */
 void tuya_audio_recorder_stop(TUYA_AUDIO_RECORDER_HANDLE handle)
 {
-    OPERATE_RET rt = OPRT_OK;
-
     PR_NOTICE("tuya_audio_recorder stop...");
     tal_mutex_lock(s_mutex);
     _voice_tts_interrupt();
@@ -666,7 +683,10 @@ static OPERATE_RET _upload_start(TUYA_AUDIO_RECORDER_CONTEXT *ctx)
     TUYA_CALL_ERR_RETURN(speaker_intf_upload_media_start(param.session_id));
 
     char request_id[TUYA_WS_REQUEST_ID_MAX_LEN] = {0};
-    tuya_voice_get_current_request_id(request_id);
+    rt = tuya_voice_get_current_request_id(request_id);
+    if (rt != OPRT_OK)
+        PR_ERR("tuya_voice_get_current_request_id failed, ret=%d", rt);
+
     PR_NOTICE("tuya_voice_upload_start...ok, request_id=%s", request_id);
 
     // update request id
