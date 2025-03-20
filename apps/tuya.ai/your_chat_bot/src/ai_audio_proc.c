@@ -30,6 +30,7 @@
 #include "tkl_video_in.h"
 #include "tkl_gpio.h"
 
+#include "tuya_display.h"
 #include "ty_vad_app.h"
 
 #define AUDIO_SAMPLE_RATE 16000
@@ -120,6 +121,12 @@ static int _audio_frame_put(TKL_AUDIO_FRAME_INFO_T *pframe)
     if (client->status < TUYA_STATUS_MQTT_CONNECTED) {
         // not connected
         return pframe->buf_size;
+    }
+
+    static uint8_t is_first = 1;
+    if (is_first) {
+        is_first = 0;
+        app_chat_enable(1);
     }
 
     if (tuya_audio_player_is_playing()) {
@@ -404,6 +411,11 @@ static void app_chat_enable(uint8_t enable)
     TUYA_GPIO_LEVEL_E level = enable ? TUYA_GPIO_LEVEL_HIGH : TUYA_GPIO_LEVEL_LOW;
     sg_ai_chat.is_enable = enable;
 
+    TY_DISPLAY_TYPE_E disp_tp;
+    disp_tp = enable ? TY_DISPLAY_TP_STAT_LISTEN : TY_DISPLAY_TP_STAT_IDLE;
+
+    tuya_display_send_msg(disp_tp, NULL, 0);
+
     tkl_gpio_write(CHAT_LED_PIN, level);
 
     return;
@@ -440,8 +452,6 @@ OPERATE_RET tuya_ai_audio_init(void)
 
     TUYA_CALL_ERR_RETURN(ai_audio_led_init());
     TUYA_CALL_ERR_RETURN(ai_audio_trigger_pin_init());
-
-    app_chat_enable(1);
 
     return OPRT_OK;
 }

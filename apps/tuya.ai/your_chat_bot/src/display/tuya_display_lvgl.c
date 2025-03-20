@@ -47,6 +47,7 @@ static lv_style_t style_ai_bubble;
 static lv_style_t style_user_bubble;
 
 static lv_obj_t *sg_title_bar;
+static lv_obj_t *sg_title_text;
 static lv_obj_t *sg_msg_container;
 
 static inline uint32_t calc_bubble_width()
@@ -102,14 +103,14 @@ static void __create_ai_chat_ui(void)
     lv_obj_set_scrollbar_mode(main_cont, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_dir(main_cont, LV_DIR_NONE);
 
-    lv_obj_t *sg_title_bar = lv_obj_create(main_cont);
+    sg_title_bar = lv_obj_create(main_cont);
     lv_obj_set_size(sg_title_bar, LV_PCT(100), 40);
     lv_obj_set_style_bg_color(sg_title_bar, lv_palette_main(LV_PALETTE_GREEN), 0);
     lv_obj_set_scrollbar_mode(sg_title_bar, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_dir(sg_title_bar, LV_DIR_NONE);
-    lv_obj_t *title = lv_label_create(sg_title_bar);
-    lv_label_set_text(title, "AI聊天伙伴");
-    lv_obj_center(title);
+    sg_title_text = lv_label_create(sg_title_bar);
+    lv_label_set_text(sg_title_text, "AI聊天伙伴");
+    lv_obj_center(sg_title_text);
 
     sg_msg_container = lv_obj_create(main_cont);
     lv_obj_set_size(sg_msg_container, DISPLAY_LCD_WIDTH, DISPLAY_LCD_HEIGHT - 40);
@@ -134,14 +135,44 @@ static void __add_wifi_state(bool is_connected)
 
     if (icon == NULL) {
         icon = lv_label_create(sg_title_bar);
+        lv_obj_set_style_text_font(icon, &font_awesome_30_4, 0);
     }
 
     lv_label_set_text(icon, (is_connected == true) ? FONT_AWESOME_WIFI : FONT_AWESOME_WIFI_OFF);
-    lv_obj_align(icon, LV_ALIGN_TOP_LEFT, 30, 0);
+    lv_obj_align(icon, LV_ALIGN_RIGHT_MID, 0, 0);
+};
+
+static void __add_listen_icon(is_listen)
+{
+    static lv_obj_t *listen_icon = NULL;
+
+    if (NULL == sg_title_bar) {
+        PR_ERR("sg_title_bar is null");
+        return;
+    }
+
+    if (listen_icon == NULL) {
+        listen_icon = lv_image_create(sg_title_bar);
+        lv_image_set_src(listen_icon, &LISTEN_icon);
+        lv_obj_align(listen_icon, LV_ALIGN_LEFT_MID, 60, 0);
+    }
+
+    if (is_listen) {
+        lv_label_set_text(sg_title_text, "聆听中......");
+        lv_obj_clear_flag(listen_icon, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_label_set_text(sg_title_text, "AI聊天伙伴");
+        lv_obj_add_flag(listen_icon, LV_OBJ_FLAG_HIDDEN);
+    }
 };
 
 static void __create_message(const char *text, bool is_ai)
 {
+    if (sg_msg_container == NULL) {
+        PR_ERR("msg container is NULL");
+        return;
+    }
+
     lv_obj_t *msg_cont = lv_obj_create(sg_msg_container);
     lv_obj_remove_style_all(msg_cont);
     lv_obj_set_size(msg_cont, LV_PCT(100), LV_SIZE_CONTENT);
@@ -243,16 +274,18 @@ void tuya_display_lv_homepage(void)
     tal_mutex_unlock(sg_lvgl_mutex_hdl);
 }
 
+void tuya_display_lv_chat_ui(void)
+{
+    tal_mutex_lock(sg_lvgl_mutex_hdl);
+    __create_ai_chat_ui();
+    tal_mutex_unlock(sg_lvgl_mutex_hdl);
+}
+
 void tuya_display_lv_chat_message(const char *text, bool is_ai)
 {
     static bool is_create_ui = false;
 
     tal_mutex_lock(sg_lvgl_mutex_hdl);
-
-    if (false == is_create_ui) {
-        __create_ai_chat_ui();
-        is_create_ui = true;
-    }
 
     __create_message(text, is_ai);
 
@@ -266,6 +299,17 @@ void tuya_display_lv_wifi_state(bool is_connected)
     tal_mutex_lock(sg_lvgl_mutex_hdl);
 
     __add_wifi_state(is_connected);
+
+    tal_mutex_unlock(sg_lvgl_mutex_hdl);
+}
+
+void tuya_display_lv_listen_state(bool is_listen)
+{
+    static bool is_create_ui = false;
+
+    tal_mutex_lock(sg_lvgl_mutex_hdl);
+
+    __add_listen_icon(is_listen);
 
     tal_mutex_unlock(sg_lvgl_mutex_hdl);
 }

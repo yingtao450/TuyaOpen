@@ -143,7 +143,7 @@ static void _tuya_voice_custom(char *type, cJSON *json)
             tuya_audio_player_play_alert(AUDIO_ALART_TYPE_PLEASE_AGAIN, TRUE);
         }
 
-         // syncDialogText without id
+        // syncDialogText without id
         if (strcmp(type, "syncDialogText") == 0 && cJSON_GetObjectItem(json, "id") == NULL) {
             cJSON *node = cJSON_GetObjectItem(json, "text");
             cJSON *text = cJSON_GetObjectItem(json, "text");
@@ -157,7 +157,6 @@ static void _tuya_voice_custom(char *type, cJSON *json)
                 tuya_display_send_msg(TY_DISPLAY_TP_AI_CHAT, text->valuestring, strlen(text->valuestring));
             }
         }
-
     }
     tal_mutex_unlock(s_mutex);
     return;
@@ -258,7 +257,6 @@ static void _tuya_voice_stream_player(TUYA_VOICE_STREAM_E type, uint8_t *data, i
 void _tuya_voice_text_stream(TUYA_VOICE_STREAM_E type, uint8_t *data, int len)
 {
 
-
     switch (type) {
     case TUYA_VOICE_STREAM_START: {
     } break;
@@ -282,6 +280,7 @@ static OPERATE_RET _tuya_voice_register_extra_mqt_cb(void *data)
         return OPRT_OK;
     }
 
+    tuya_display_send_msg(TY_DISPLAY_TP_STAT_ONLINE, NULL, 0);
     tuya_audio_player_play_alert(AUDIO_ALART_TYPE_NETWORK_CONNECTED, TRUE);
 
     rt = tuya_voice_proto_start();

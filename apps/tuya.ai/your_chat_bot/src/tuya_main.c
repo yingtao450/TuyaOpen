@@ -32,6 +32,7 @@
 #include "lwip_init.h"
 #endif
 
+#include "tuya_display.h"
 #include "ai_audio_proc.h"
 
 /* Tuya device handle */
@@ -156,6 +157,7 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
     case TUYA_EVENT_BIND_START:
         PR_INFO("Device Bind Start!");
         // 软重启，未配网，播报配网提示
+        tuya_display_send_msg(TY_DISPLAY_TP_STAT_NETCFG, NULL, 0);
         tuya_audio_player_play_alert(AUDIO_ALART_TYPE_NETWORK_CFG, TRUE);
         break;
 
@@ -296,6 +298,8 @@ void user_main(void)
 
     PR_DEBUG("tuya_iot_init success");
 
+    tuya_display_init();
+
     ret = tuya_ai_audio_init();
     if (ret != OPRT_OK) {
         PR_ERR("tuya_audio_recorde_init failed");
@@ -304,8 +308,6 @@ void user_main(void)
 
     /* Start tuya iot task */
     tuya_iot_start(&ai_client);
-
-    tuya_display_init();
 
     reset_netconfig_check();
 
@@ -348,7 +350,7 @@ static void tuya_app_thread(void *arg)
 
 void tuya_app_main(void)
 {
-    THREAD_CFG_T thrd_param = {4096+1024, 4, "tuya_app_main"};
+    THREAD_CFG_T thrd_param = {4096 + 1024, 4, "tuya_app_main"};
     tal_thread_create_and_start(&ty_app_thread, NULL, NULL, tuya_app_thread, NULL, &thrd_param);
 }
 #endif
