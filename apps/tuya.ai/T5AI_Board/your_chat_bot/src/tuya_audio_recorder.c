@@ -282,6 +282,7 @@ static OPERATE_RET _tuya_voice_register_extra_mqt_cb(void *data)
         return OPRT_OK;
     }
 
+    tuya_display_send_msg(TY_DISPLAY_TP_STAT_ONLINE, NULL, 0);
     tuya_audio_player_play_alert(AUDIO_ALART_TYPE_NETWORK_CONNECTED, TRUE);
 
     rt = tuya_voice_proto_start();

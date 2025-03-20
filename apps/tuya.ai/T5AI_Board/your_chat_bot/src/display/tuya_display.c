@@ -43,6 +43,9 @@ static void __chat_display_task(void *args)
     (void) args;
 
     tuya_display_lv_homepage();
+    tal_system_sleep(2000);
+    
+    tuya_display_lv_chat_ui();
 
     while(1) {
         tkl_queue_fetch(sg_chat_msg_queue_hdl, &msg_data, TKL_QUEUE_WAIT_FROEVER);
@@ -55,11 +58,12 @@ static void __chat_display_task(void *args)
                 tuya_display_lv_chat_message(msg_data.data, true);
                 break;
             case TY_DISPLAY_TP_STAT_LISTEN:
-                
+                tuya_display_lv_listen_state(true);
                 break;
             case TY_DISPLAY_TP_STAT_SPEAK:
                 break;
             case TY_DISPLAY_TP_STAT_IDLE:
+                tuya_display_lv_listen_state(false);
                 break;
             case TY_DISPLAY_TP_STAT_NETCFG:
                 tuya_display_lv_chat_message(NET_CFG_TEXT, true);
@@ -109,12 +113,16 @@ OPERATE_RET tuya_display_send_msg(TY_DISPLAY_TYPE_E tp, char *data, int len)
 
     chat_msg.type = tp;
     chat_msg.len  = len;
-    chat_msg.data = (char *)tkl_system_psram_malloc(len+1);
-    if(NULL == chat_msg.data) {
-        return OPRT_MALLOC_FAILED;
+    if(len && data != NULL) {
+        chat_msg.data = (char *)tkl_system_psram_malloc(len+1);
+        if(NULL == chat_msg.data) {
+            return OPRT_MALLOC_FAILED;
+        }
+        memcpy(chat_msg.data, data, len);
+        chat_msg.data[len] = 0; //"\0"
+    }else {
+        chat_msg.data = NULL;
     }
-    memcpy(chat_msg.data, data, len);
-    chat_msg.data[len] = 0; //"\0"
 
     tkl_queue_post(sg_chat_msg_queue_hdl, &chat_msg, TKL_QUEUE_WAIT_FROEVER);
 

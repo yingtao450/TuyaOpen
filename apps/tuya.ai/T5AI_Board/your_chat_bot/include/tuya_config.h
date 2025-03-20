@@ -19,8 +19,8 @@
  * 
  */
 #define TUYA_PRODUCT_KEY      "tsqwarw3fkyzzgbf"                        // Please change your product key
-#define TUYA_OPENSDK_UUID      "uuidxxxxxxxxxxxxxxxx"                    // Please change the correct uuid
-#define TUYA_OPENSDK_AUTHKEY   "keyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"        // Please change the correct authkey
+#define TUYA_OPENSDK_UUID      "uuidc0ce6be00a118b8b"                    // Please change the correct uuid
+#define TUYA_OPENSDK_AUTHKEY   "nuoIWlGJAppAbPX5ONjc8hmVHsPNoCgd"        // Please change the correct authkey
 
 // #define TUYA_DEVICE_FIRMWAREKEY "keye4hayh88sx34q"
 
