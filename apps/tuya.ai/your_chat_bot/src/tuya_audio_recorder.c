@@ -71,6 +71,7 @@ TUYA_AUDIO_RECORDER_CONTEXT *s_ctx = NULL;
 
 static void _ai_proc_task(void *arg);
 static OPERATE_RET ty_ai_session_id_set(TUYA_AUDIO_RECORDER_HANDLE handle, char *session_id);
+extern OPERATE_RET ai_audio_status_proc(void);
 
 static void _request_id_update(char *request_id)
 {
@@ -279,6 +280,8 @@ static OPERATE_RET _tuya_voice_register_extra_mqt_cb(void *data)
     if (registed) {
         return OPRT_OK;
     }
+
+    ai_audio_status_proc();
 
     tuya_display_send_msg(TY_DISPLAY_TP_STAT_ONLINE, NULL, 0);
     tuya_audio_player_play_alert(AUDIO_ALART_TYPE_NETWORK_CONNECTED, TRUE);
