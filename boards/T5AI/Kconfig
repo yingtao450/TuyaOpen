@@ -1,0 +1,32 @@
+# Ktuyaconf
+config PLATFORM_CHOICE
+    string
+    default "T5AI"
+
+config PLATFORM_T5
+    bool
+    default y
+
+config OPERATING_SYSTEM
+    int
+    default 98
+    ---help---
+        100     /* LINUX */
+        98      /* RTOS */
+
+choice
+    prompt "Choice a module"
+
+    config MODULE_CHOICE_T5_E1
+        bool "T5-E1"
+    if (MODULE_CHOICE_T5_E1)
+    rsource "./T5-E1/Kconfig"
+    endif
+
+    config MODULE_CHOICE_T5_E1_IPEX
+        bool "T5-E1_IPEX"
+    if (MODULE_CHOICE_T5_E1_IPEX)
+    rsource "./T5-E1-IPEX/Kconfig"
+    endif
+
+endchoice
