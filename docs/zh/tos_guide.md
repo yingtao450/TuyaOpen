@@ -114,6 +114,12 @@ $ tos savedef
 
 该命令会将menuconfig配置结果与默认值的差异内容，保存在`app_default.config`文件中。
 
+### 选择配置文件
+```shell
+$ tos conifg_choice
+```
+
+该命令会选择config目录中的配置文件代替app_defalut.config文件。
 
 ### 设置示例
 

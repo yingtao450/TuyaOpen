@@ -365,6 +365,21 @@ function savedef_exec()
     cd - > /dev/null
 }
 
+function config_choice_exec()
+{
+    PROJECT_FILE="$PROJECT_ROOT/CMakeLists.txt"
+    if [ ! -f "$PROJECT_FILE" ]; then
+        NOTE="Can't found [CMakeLists.txt]."
+        show "${fore[red]}" "$NOTE"
+        return 1
+    fi
+
+    APP_DEFAULT_CONFIG="$PROJECT_ROOT/app_default.config"
+    CONFIG_DIR="$PROJECT_ROOT/config"
+    CONFIG_CHOICE=$(ls "$CONFIG_DIR" | bash $LISTMENU "Configs" 20 60 13)
+    cp "$CONFIG_DIR/$CONFIG_CHOICE" "$APP_DEFAULT_CONFIG"
+}
+
 function set_example_exec()
 {
     NOW_PLATFORM_FILE=$OPEN_SDK_ROOT/.set_example
@@ -496,6 +511,7 @@ Commands:
     fullclean  - Clean project and delete build path
     menuconfig - Configuration project features
     savedef    - Saves minimal configuration file (app_default.config)
+    config_choice  - Select the file in the config directory instead of app_defalut.config
     set_example  - Set examples from platform
     new_platform - New platform [platform_name]
     upgrade    - Upgrade framework and platforms
@@ -618,6 +634,9 @@ case $1 in
         ;;
     savedef)
         savedef_exec
+        ;;
+    config_choice)
+        config_choice_exec
         ;;
     set_example)
         set_example_exec

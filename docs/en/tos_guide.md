@@ -116,6 +116,13 @@ $ tos savedef
 
 This command saves the difference between the menuconfig result and the default value in the `app_default.config` file.
 
+### Select the configuration
+```shell
+$ tos conifg_choice
+```
+
+This command selects the configuration file in the config directory instead of the app_defalut.config file.
+
 ### Setting example
 
 ```shell
