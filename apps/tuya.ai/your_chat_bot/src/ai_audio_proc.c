@@ -290,9 +290,10 @@ static void _vad_init()
     vad_config.sample_rate = AUDIO_SAMPLE_RATE;
     vad_config.channel = AUDIO_CHANNEL;
     vad_config.vad_frame_duration = 10;
+    vad_config.scale = 1.0;
     ty_vad_app_init(&vad_config);
 
-    PR_ERR("vad start");
+    PR_NOTICE("vad start");
 }
 
 static OPERATE_RET _audio_init(void)
@@ -333,9 +334,6 @@ static OPERATE_RET _audio_init(void)
         PR_ERR("tkl_ai_start fail");
         goto err;
     }
-
-    // set mic volume
-    tkl_ai_set_vol(TKL_AUDIO_TYPE_BOARD, 0, 80);
 
     // set spk volume
     tuya_audio_player_set_volume(audio_volume_get());
@@ -442,11 +440,10 @@ OPERATE_RET tuya_ai_audio_init(void)
     tuya_audio_debug_init();
 #endif
 
+    _audio_init();
     TUYA_CALL_ERR_RETURN(tuya_audio_recorder_init());
     TUYA_CALL_ERR_RETURN(tuya_audio_player_init());
     TUYA_CALL_ERR_RETURN(tuya_audio_recorder_start(&ty_ai_handle, &cfg));
-
-    _audio_init();
 
     PR_DEBUG("ai_audio_trigger_pin_init");
 
