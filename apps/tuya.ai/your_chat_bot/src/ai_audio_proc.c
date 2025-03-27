@@ -440,10 +440,11 @@ OPERATE_RET tuya_ai_audio_init(void)
     tuya_audio_debug_init();
 #endif
 
-    _audio_init();
     TUYA_CALL_ERR_RETURN(tuya_audio_recorder_init());
     TUYA_CALL_ERR_RETURN(tuya_audio_player_init());
     TUYA_CALL_ERR_RETURN(tuya_audio_recorder_start(&ty_ai_handle, &cfg));
+
+    _audio_init();
 
     PR_DEBUG("ai_audio_trigger_pin_init");
 

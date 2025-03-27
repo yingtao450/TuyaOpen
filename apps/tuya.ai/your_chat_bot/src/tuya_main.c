@@ -298,13 +298,13 @@ void user_main(void)
 
     PR_DEBUG("tuya_iot_init success");
 
-    tuya_display_init();
-
     ret = tuya_ai_audio_init();
     if (ret != OPRT_OK) {
         PR_ERR("tuya_audio_recorde_init failed");
         return;
     }
+
+    tuya_display_init();
 
     /* Start tuya iot task */
     tuya_iot_start(&ai_client);

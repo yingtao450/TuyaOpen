@@ -98,7 +98,7 @@ OPERATE_RET tuya_display_init(void)
     THREAD_CFG_T cfg = {
         .thrdname = "chat_display",
         .priority = THREAD_PRIO_1,
-        .stackDepth = 1024 * 2,
+        .stackDepth = 1024 * 4,
     };
 
     TUYA_CALL_ERR_RETURN(
