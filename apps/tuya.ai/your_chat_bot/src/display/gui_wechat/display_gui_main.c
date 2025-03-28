@@ -137,7 +137,7 @@ static void __gui_show_listen_icon(bool is_listen)
     if (listen_icon == NULL) {
         listen_icon = lv_image_create(sg_title_bar);
         lv_image_set_src(listen_icon, &LISTEN_icon);
-        lv_obj_align(listen_icon, LV_ALIGN_LEFT_MID, LV_PCT(20), 0);
+        lv_obj_align(listen_icon, LV_ALIGN_LEFT_MID, LV_PCT(15), 0);
     }
 
     if (is_listen) {
