@@ -1,8 +1,5 @@
 
 menu "configure tuya cloud service"
-    config MBEDTLS_CONFIG_FILE
-        string "MBEDTLS_CONFIG_FILE"
-        default "tuya_tls_config.h"
 
     config TUYA_SECURITY_LEVEL
         int
