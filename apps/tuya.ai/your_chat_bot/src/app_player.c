@@ -4,6 +4,8 @@
  * @version 0.1
  * @date 2025-03-25
  */
+#define MINIMP3_IMPLEMENTATION
+#include "minimp3_ex.h"
 
 #include "app_player.h"
 #include "app_media_alert.h"
@@ -13,20 +15,19 @@
 
 #include "tkl_audio.h"
 
-#include <driver/aud_dac_types.h>
-#include <driver/aud_dac.h>
-#include <driver/dma.h>
-#include <driver/audio_ring_buff.h>
-#include <modules/mp3dec.h>
-
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
 #define MP3_STREAM_BUFF_MAX_LEN (1024 * 64 * 2)
 
-#define PLAYING_NO_DATA_TIMEOUT_MS (5 * 1000)
+#define MAINBUF_SIZE 1940
 
-#define MP3_PCM_SIZE_MAX (MAX_NSAMP * MAX_NCHAN * MAX_NGRAN * 2)
+#define MAX_NGRAN 2   /* max granules */
+#define MAX_NCHAN 2   /* max channels */
+#define MAX_NSAMP 576 /* max samples per channel, per granule */
+
+#define MP3_PCM_SIZE_MAX           (MAX_NSAMP * MAX_NCHAN * MAX_NGRAN * 2)
+#define PLAYING_NO_DATA_TIMEOUT_MS (5 * 1000)
 
 #define APP_PLAYER_STAT_CHANGE(new_stat)                                                                               \
     do {                                                                                                               \
@@ -46,9 +47,8 @@ typedef struct {
     APP_PLAYER_STATE stat;
     TIMER_ID tm_id;
 
-    HMP3Decoder mp3_dec;
-    MP3FrameInfo mp3_frame_info;
-    uint8_t first_frame;
+    mp3dec_t *mp3_dec;
+    mp3dec_frame_info_t mp3_frame_info;
 
     uint8_t *mp3_raw;
     uint8_t *mp3_raw_head;
@@ -93,9 +93,14 @@ static OPERATE_RET __app_player_mp3_start(void)
     }
 
     if (NULL == sg_player.mp3_dec) {
-        sg_player.mp3_dec = MP3InitDecoder();
-        TUYA_CHECK_NULL_RETURN(sg_player.mp3_dec, OPRT_COM_ERROR);
-        PR_DEBUG("MP3InitDecoder success");
+        sg_player.mp3_dec = (mp3dec_t *)tkl_system_psram_malloc(sizeof(mp3dec_t));
+        if (NULL == sg_player.mp3_dec) {
+            PR_ERR("malloc mp3dec_t failed");
+            tal_mutex_unlock(sg_player.player_mutex);
+            return OPRT_MALLOC_FAILED;
+        }
+
+        mp3dec_init(sg_player.mp3_dec);
     }
 
     sg_player.mp3_raw_used_len = 0;
@@ -103,24 +108,6 @@ static OPERATE_RET __app_player_mp3_start(void)
     tal_mutex_unlock(sg_player.player_mutex);
 
     return rt;
-}
-
-static int32_t __app_mp3_find_id3(uint8_t *buf)
-{
-    uint8_t tag_header[10];
-    int tag_size = 0;
-
-    memcpy(tag_header, buf, sizeof(tag_header));
-
-    if (tag_header[0] == 'I' && tag_header[1] == 'D' && tag_header[2] == '3') {
-        tag_size = ((tag_header[6] & 0x7F) << 21) | ((tag_header[7] & 0x7F) << 14) | ((tag_header[8] & 0x7F) << 7) |
-                   (tag_header[9] & 0x7F);
-        PR_DEBUG("ID3 tag_size = %d", tag_size);
-        return tag_size + sizeof(tag_header);
-    } else {
-        // tag_header ignored
-        return 0;
-    }
 }
 
 static OPERATE_RET __app_player_mp3_playing(void)
@@ -139,7 +126,6 @@ static OPERATE_RET __app_player_mp3_playing(void)
         rt = OPRT_RECV_DA_NOT_ENOUGH;
         goto __EXIT;
     }
-    // PR_DEBUG("rb_used_len=%d", rb_used_len);
 
     if (NULL != ctx->mp3_raw_head && ctx->mp3_raw_used_len > 0 && ctx->mp3_raw_head != ctx->mp3_raw) {
         // PR_DEBUG("move data, offset=%d, used_len=%d", ctx->mp3_raw_head - ctx->mp3_raw, ctx->mp3_raw_used_len);
@@ -151,50 +137,27 @@ static OPERATE_RET __app_player_mp3_playing(void)
     if (rb_used_len > 0 && ctx->mp3_raw_used_len < MAINBUF_SIZE) {
         uint32_t read_len =
             (MAINBUF_SIZE - ctx->mp3_raw_used_len) > rb_used_len ? rb_used_len : (MAINBUF_SIZE - ctx->mp3_raw_used_len);
-        // PR_DEBUG("read_len=%d", read_len);
         uint32_t rt_len = tuya_ring_buff_read(ctx->rb_hdl, ctx->mp3_raw + ctx->mp3_raw_used_len, read_len);
+        // PR_DEBUG("read_len=%d rt_len: %d", read_len, rt_len);
 
         ctx->mp3_raw_used_len += rt_len;
     }
 
-    // find id3 tag
-    if (ctx->first_frame && ctx->mp3_raw_used_len > 10) {
-        int32_t id3_size = __app_mp3_find_id3(ctx->mp3_raw);
-        if (id3_size > 0) {
-            ctx->mp3_raw_used_len -= id3_size;
-            ctx->mp3_raw_head += id3_size;
-        }
-        ctx->first_frame = 0;
-    }
-
-    // decode mp3 data
-    int sync_offset = MP3FindSyncWord(ctx->mp3_raw_head, ctx->mp3_raw_used_len);
-    if (sync_offset < 0) {
-        PR_ERR("MP3FindSyncWord not find!, sync_offset=%d", sync_offset);
+    int samples = mp3dec_decode_frame(ctx->mp3_dec, ctx->mp3_raw_head, ctx->mp3_raw_used_len,
+                                      (mp3d_sample_t *)ctx->mp3_pcm, &ctx->mp3_frame_info);
+    if (samples == 0) {
         ctx->mp3_raw_used_len = 0;
+        ctx->mp3_raw_head = ctx->mp3_raw;
         rt = OPRT_COM_ERROR;
         goto __EXIT;
     }
 
-    ctx->mp3_raw_head += sync_offset;
-    ctx->mp3_raw_used_len -= sync_offset;
-    int rt_dec = MP3Decode(ctx->mp3_dec, &ctx->mp3_raw_head, &ctx->mp3_raw_used_len, (short *)ctx->mp3_pcm, 0);
-    if (rt_dec != ERR_MP3_NONE) {
-        PR_ERR("MP3Decode failed, code is %d", rt_dec);
-        ctx->mp3_raw_used_len -= 80;
-        ctx->mp3_raw_head += 80;
-        rt = OPRT_COM_ERROR;
-        goto __EXIT;
-    }
-
-    // 3. play pcm data
-    // PR_DEBUG("mp3_raw_used_len=%d", ctx->mp3_raw_used_len);
-    memset(&ctx->mp3_frame_info, 0, sizeof(MP3FrameInfo));
-    MP3GetLastFrameInfo(ctx->mp3_dec, &ctx->mp3_frame_info);
+    ctx->mp3_raw_used_len -= ctx->mp3_frame_info.frame_bytes;
+    ctx->mp3_raw_head += ctx->mp3_frame_info.frame_bytes;
 
     TKL_AUDIO_FRAME_INFO_T frame;
     frame.pbuf = ctx->mp3_pcm;
-    frame.used_size = ctx->mp3_frame_info.outputSamps * 2;
+    frame.used_size = samples * 2;
     tkl_ao_put_frame(0, 0, NULL, &frame);
 
 __EXIT:
@@ -228,7 +191,6 @@ static void __chat_bot_player(void *arg)
                 PR_DEBUG("app player start");
                 app_player_stat_post(APP_PLAYER_STAT_PLAY);
                 ctx->is_playing = 1;
-                ctx->first_frame = 1;
             }
         } break;
         case APP_PLAYER_STAT_PLAY: {
@@ -260,28 +222,11 @@ static void __chat_bot_player(void *arg)
     }
 }
 
-static void *mp3_private_alloc_psram(size_t size)
-{
-    return tkl_system_psram_malloc(size);
-}
-
-static void mp3_private_free_psram(void *buff)
-{
-    tkl_system_psram_free(buff);
-}
-
-static void *mp3_private_memset_psram(void *s, unsigned char c, size_t n)
-{
-    return tkl_system_memset(s, c, n);
-}
-
 static OPERATE_RET __app_player_mp3_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
     PR_DEBUG("app player mp3 init...");
-
-    MP3SetBuffMethodAlwaysFourAlignedAccess(mp3_private_alloc_psram, mp3_private_free_psram, mp3_private_memset_psram);
 
     sg_player.mp3_raw = (uint8_t *)tkl_system_psram_malloc(MAINBUF_SIZE);
     TUYA_CHECK_NULL_GOTO(sg_player.mp3_raw, __ERR);
@@ -292,14 +237,14 @@ static OPERATE_RET __app_player_mp3_init(void)
     return rt;
 
 __ERR:
-    if (sg_player.mp3_raw) {
-        tkl_system_psram_free(sg_player.mp3_raw);
-        sg_player.mp3_raw = NULL;
-    }
-
     if (sg_player.mp3_pcm) {
         tkl_system_psram_free(sg_player.mp3_pcm);
         sg_player.mp3_pcm = NULL;
+    }
+
+    if (sg_player.mp3_raw) {
+        tkl_system_psram_free(sg_player.mp3_raw);
+        sg_player.mp3_raw = NULL;
     }
 
     return OPRT_COM_ERROR;
@@ -398,8 +343,6 @@ OPERATE_RET app_player_data_write(uint8_t *data, uint32_t len, uint8_t is_eof)
     }
 
     if (NULL != data && len > 0) {
-        // PR_DEBUG("player write data, len=%d", len);
-
         uint32_t rb_free_len = tuya_ring_buff_free_size_get(sg_player.rb_hdl);
         while (rb_free_len < len) {
             // PR_DEBUG("---> ring buffer is full, wait...");
@@ -478,7 +421,7 @@ OPERATE_RET app_player_init(void)
 
     // thread init
     TUYA_CALL_ERR_GOTO(
-        tkl_thread_create_in_psram(&sg_player.thrd_hdl, "ai_player", 1024 * 8, THREAD_PRIO_2, __chat_bot_player, NULL),
+        tkl_thread_create_in_psram(&sg_player.thrd_hdl, "ai_player", 1024 * 20, THREAD_PRIO_2, __chat_bot_player, NULL),
         __ERR);
 
     tal_mutex_unlock(sg_player.player_mutex);

@@ -17,6 +17,7 @@ file(GLOB_RECURSE media_srcs "${APP_PATH}/src/media/*.c")
 list(APPEND APP_SRCS ${display_srcs} ${media_srcs})
 
 set(APP_INC ${APP_PATH}/include ${APP_PATH}/include/media)
+list(APPEND APP_INC "${APP_PATH}/src/minimp3")
 ########################################
 # Target Configure
 ########################################
