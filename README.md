@@ -49,13 +49,13 @@ For detailed usage of the tos command, please refer to [tos command](./docs/en/t
 
 ### Step2. Select the project to be compiled
 
-1. Compile Example
+- Method 1: Compile Example
 
 To select the example to be compiled, use the `tos set_example` command to choose based on the platform. The `examples` directory will be modified to match the selected platform's example.
 
 For more information about examples, click [Example Project](#example).
 
-2. Compile App
+- Method 2: Compile App
 
 Select the app to be compiled, such as [apps/tuya_cloud/switch_demo](https://github.com/tuya/TuyaOpen/tree/master/apps/tuya_cloud/switch_demo), and switch to the corresponding directory.
 

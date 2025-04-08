@@ -48,13 +48,14 @@ TuyaOpen 通过 tos 命令进行编译、调试等操作，tos 命令会根据�
 tos 命令的详细使用方法，请参考 [tos 命令](./docs/zh/tos_guide.md)。
 
 ### step2. 选择待编译项目
-1. 编译 example
+- 方式1：编译 example
 
 选择待编译 example，可使用命令`tos set_example`，根据平台完成选择，目录 `examples` 会修改为对应平台的示例。
 
 更多 example 信息点击 [示例工程](#example) 
 
-2. 编译 app
+- 方式2：编译 app
+
 选择待编译 app，如 [apps/tuya_cloud/switch_demo](https://github.com/tuya/TuyaOpen/tree/master/apps/tuya_cloud/switch_demo) , 并切换至对应目录。
 
 使用 `tos config_choice` 命令选择编译目标平台或目标板。
