@@ -47,6 +47,8 @@ tuya_iot_client_t ai_client;
 
 #define DPID_VOLUME 3
 
+static uint8_t _need_reset = 0;
+
 /**
  * @brief user defined log output api, in this demo, it will use uart0 as log-tx
  *
@@ -141,6 +143,7 @@ OPERATE_RET ai_audio_status_proc(void)
 
     return tuya_iot_dp_obj_report(client, client->activate.devid, &dp_obj, 1, 0);
 }
+
 /**
  * @brief user defined event handler
  *
@@ -156,6 +159,10 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
     switch (event->id) {
     case TUYA_EVENT_BIND_START:
         PR_INFO("Device Bind Start!");
+        if (_need_reset == 1) {
+            PR_INFO("Device Reset!");
+            tal_system_reset();
+        }
         // 软重启，未配网，播报配网提示
         tuya_display_send_msg(TY_DISPLAY_TP_STAT_NETCFG, NULL, 0);
         tuya_audio_player_play_alert(AUDIO_ALART_TYPE_NETWORK_CFG, TRUE);
@@ -187,6 +194,8 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
     case TUYA_EVENT_RESET:
         PR_INFO("Device Reset:%d", event->value.asInteger);
         tal_event_publish(EVENT_RESET, NULL);
+
+        _need_reset = 1;
         break;
 
     /* RECV OBJ DP */
@@ -255,7 +264,7 @@ void user_main(void)
     tal_sw_timer_init();
     tal_workq_init();
 
-    reset_netconfig_init();
+    reset_netconfig_start();
 
     tuya_iot_license_t license;
 
