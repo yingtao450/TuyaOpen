@@ -118,7 +118,7 @@ This command saves the difference between the menuconfig result and the default 
 
 ### Select the configuration
 ```shell
-$ tos conifg_choice
+$ tos config_choice
 ```
 
 This command selects the configuration file in the config directory instead of the app_defalut.config file.

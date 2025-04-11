@@ -116,7 +116,7 @@ $ tos savedef
 
 ### 选择配置文件
 ```shell
-$ tos conifg_choice
+$ tos config_choice
 ```
 
 该命令会选择config目录中的配置文件代替app_defalut.config文件。
