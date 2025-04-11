@@ -26,4 +26,4 @@ English | [简体中文](./RAEDME_zh.md)
 ## Compilation
 1. Run the `tos config_choice` command to select the current development board in use.
 2. If you need to modify the configuration, run the `tso menuconfig` command to make changes.
-3. Run the `tso build` command to compile the project.
+3. Run the `tos build` command to compile the project.
