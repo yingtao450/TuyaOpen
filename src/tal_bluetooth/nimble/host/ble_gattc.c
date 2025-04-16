@@ -59,7 +59,7 @@
 #include "ble_gap.h"
 #include "ble_hs_priv.h"
 #include "tuya_ble_mbuf.h"
-//#include "ble.h"
+// #include "ble.h"
 
 #if TY_HS_BLE_CONNECT
 /*****************************************************************************

@@ -22,6 +22,7 @@
 #include "tuya_cloud_types.h"
 #include "tal_api.h"
 #include "tal_log.h"
+#include "tal_event.h"
 #include "uni_random.h"
 #include "tal_system.h"
 #include "tal_hash.h"
