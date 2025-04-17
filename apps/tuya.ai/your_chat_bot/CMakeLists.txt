@@ -37,5 +37,5 @@ target_include_directories(${EXAMPLE_LIB}
 # Add subdirectory
 ########################################
 if (CONFIG_ENABLE_CHAT_DISPLAY STREQUAL "y")
-add_subdirectory(${APP_PATH}/src/display)
+    add_subdirectory(${APP_PATH}/src/display)
 endif()
