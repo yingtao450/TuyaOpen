@@ -9,8 +9,6 @@ TuyaOpen 开发指南
 
 .. figure:: ../images/TuyaOpen.png
 
-`[English] <https://github.com/tuya/TuyaOpen/blob/master/README.md>`_
-
 TuyaOpen 是一款跨芯片平台、操作系统的 AI+IoT 开发框架。它基于通用南向接口设计，支持 Bluetooth、Wi-Fi、Ethernet 等通信协议，提供了物联网开发的核心功能，包括配网，激活，控制，升级等；它具备强大的安全合规能力，包括设备认证、数据加密、通信加密等，满足全球各个国家和地区的数据合规需求。
 
 基于 TuyaOpen 开发的 AI+IoT 产品，如果使用 tuya_cloud_service 组件的功能，就可以使用涂鸦APP、云服务提供的强大生态能力，并与 Power By Tuya 设备互联互通。
@@ -21,7 +19,7 @@ TuyaOpen 是一款跨芯片平台、操作系统的 AI+IoT 开发框架。它基
 贡献代码
 ============
 
-如果您对 TuyaOpen 感兴趣，并希望参与 TuyaOpen 的开发并成为代码贡献者，请先参阅 `贡献指南 <https://github.com/tuya/TuyaOpen/blob/master/docs/zh_CN/contribute_guide.md>`_。
+如果您对 TuyaOpen 感兴趣，并希望参与 TuyaOpen 的开发并成为代码贡献者，请先参阅 `贡献指南 <https://github.com/tuya/TuyaOpen/blob/master/docs/zh/contribute_guide.md>`_。
 
 ============
 TuyaOpen 相关链接

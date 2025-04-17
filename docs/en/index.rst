@@ -9,8 +9,6 @@ TuyaOpen Development Guide
 
 .. figure:: ../images/TuyaOpen.png
 
-`[English] <https://github.com/tuya/TuyaOpen/blob/master/README.md>`_
-
 TuyaOpen is an open source AI+IoT development framework that supports cross-chip platforms and operating systems. It is designed based on a universal southbound interface and supports communication protocols such as Bluetooth, Wi-Fi, and Ethernet. It provides core functionalities for AI+IoT development, including pairing, activation, control, and upgrading.
 The sdk has robust security and compliance capabilities, including device authentication, data encryption, and communication encryption, meeting data compliance requirements in various countries and regions worldwide.
 
