@@ -34,8 +34,10 @@ Tuyaopen Framework 包括：
 
 - 方式2：如当前模组未烧录 TuyaOpen 授权码，可通过 `https://platform.tuya.com/purchase/index?type=6 <https://platform.tuya.com/purchase/index?type=6>`_ 页面购买 ** TuyaOpen 授权码**，然后将 [apps/tuya_cloud/switch_demo/src/tuya_config.h](./src/tuya_config.h) 文件中 `TUYA_DEVICE_UUID` 和 `TUYA_DEVICE_AUTHKEY` 替换为购买成功后获取到的 `uuid` 和 `authkey`。
 
+
 .. image:: ../../images/zh/authorization_code.png
   :width: 500px
+
 
 .. code-block:: c
 
@@ -48,7 +50,7 @@ Tuyaopen Framework 包括：
    }
 
 
-   如 `tuya_iot_license_read()` 接口返回 OPRT_OK，则表示当前设备已经烧录了 TuyaOpen 授权码，否则表示当前模组并未烧录 TuyaOpen 授权码。
+如 `tuya_iot_license_read()` 接口返回 OPRT_OK，则表示当前设备已经烧录了 TuyaOpen 授权码，否则表示当前模组并未烧录 TuyaOpen 授权码。
 
 
 ========================

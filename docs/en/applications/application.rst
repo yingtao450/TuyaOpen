@@ -47,7 +47,7 @@ The dedicated authorization code for TuyaOpen can be obtained through the follow
       PR_WARN("Replace the TUYA_DEVICE_UUID and TUYA_DEVICE_AUTHKEY contents, otherwise the demo cannot work");
    }
 
-   If the `tuya_iot_license_read()` interface returns OPRT_OK, it indicates that the current device has a TuyaOpen authorization code pre-burned. Otherwise, it indicates that the current module is not pre-burned with a TuyaOpen authorization code.
+If the `tuya_iot_license_read()` interface returns OPRT_OK, it indicates that the current device has a TuyaOpen authorization code pre-burned. Otherwise, it indicates that the current module is not pre-burned with a TuyaOpen authorization code.
 
 
 ========================
