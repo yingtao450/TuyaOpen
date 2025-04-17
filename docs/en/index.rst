@@ -62,6 +62,7 @@ gitee Mirrors
 
    quick_start.md
    tos_guide.md
+   examples/examples.rst
    applications/application.rst
    peripherals/peripherals.rst
    new_platform.md
