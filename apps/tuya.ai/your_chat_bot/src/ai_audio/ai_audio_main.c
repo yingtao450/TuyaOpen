@@ -34,18 +34,10 @@ typedef struct {
 ***********************variable define**********************
 ***********************************************************/
 static bool sg_ai_audio_is_silent = true;
-static bool sg_is_support_interrupt = 0;
-static THREAD_HANDLE sg_ai_audio_thrd_hdl = NULL;
-static QUEUE_HANDLE sg_ai_audio_frame_queue = NULL;
 static AI_AGENT_MSG_CB sg_ai_agent_msg_cb = NULL;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-static void __ai_audio_silent_cb(void)
-{
-    ai_audio_set_silent(true);
-}
-
 static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
 {
 
@@ -81,139 +73,46 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
     }
 }
 
-static int __ai_audio_get_frame_cb(TKL_AUDIO_FRAME_INFO_T *pframe)
+static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E state, uint8_t *data, uint32_t len, void *arg)
 {
-    AI_AUDIO_FRAME_MSG_T msg;
-    OPERATE_RET rt = OPRT_OK;
-
-    if (true == sg_ai_audio_is_silent) {
-        return 0;
-    }
-
-    if (false == sg_is_support_interrupt) {
-        if (true == ai_audio_player_is_playing()) {
-            return 0;
-        }
-    }
-
-#if 0
-     msg.frame_len = pframe->used_size;
-     msg.frame = tkl_system_psram_malloc(pframe->used_size);
-     if(NULL == msg.frame) {
-         PR_ERR("malloc failed");
-         return 1;
-     }
-     memcpy(msg.frame, pframe->pbuf, pframe->used_size);
- 
-     rt = tal_queue_post(sg_ai_audio_frame_queue, &msg, 0);
-     if(rt !=  OPRT_OK) {
-         PR_ERR("tal_queue_post failed:%d", rt);
-         return 1;
-     }
-#else
-    AI_AUDIO_WAKEUP_EVENT_E wakeup_evt = AI_AUDIO_WAKEUP_EVT_NONE;
-
-    ai_audio_wakeup_feed(pframe->pbuf, pframe->used_size);
-
-    wakeup_evt = ai_audio_wakeup_detect_event();
-
-    if (true == ai_audio_is_awake()) {
-        ai_audio_cloud_asr_input(pframe->pbuf, pframe->used_size);
-    } else {
-        ai_audio_cloud_asr_vad_input(pframe->pbuf, pframe->used_size);
-    }
-
-    if (AI_AUDIO_WAKEUP_EVT_ENTER_IDLE == wakeup_evt) {
+    switch (state) {
+    case AI_AUDIO_INPUT_EVT_IDLE:
+        ai_audio_cloud_asr_reset();
+        break;
+    case AI_AUDIO_INPUT_EVT_ENTER_DETECT:
+        ai_audio_cloud_asr_input(data, len);
         ai_audio_cloud_asr_stop();
-    } else if (AI_AUDIO_WAKEUP_EVT_WAKEUP == wakeup_evt) {
+        break;
+    case AI_AUDIO_INPUT_EVT_DETECTING:
+        ai_audio_cloud_asr_vad_input(data, len);
+        break;
+    case AI_AUDIO_INPUT_EVT_WAKEUP:
+        ai_audio_player_play_alert(AI_AUDIO_ALERT_WAKEUP);
+        ai_audio_cloud_asr_input(data, len);
         ai_audio_cloud_asr_start();
+        break;
+    case AI_AUDIO_INPUT_EVT_AWAKE:
+        ai_audio_cloud_asr_input(data, len);
+        break;
     }
-
-#endif
-
-    return rt;
-}
-
-static void __ai_audio_handle_frame_task(void *arg)
-{
-    AI_AUDIO_FRAME_MSG_T msg;
-    AI_AUDIO_WAKEUP_EVENT_E wakeup_evt = AI_AUDIO_WAKEUP_EVT_NONE;
-
-    for (;;) {
-        tal_queue_fetch(sg_ai_audio_frame_queue, &msg, TKL_QUEUE_WAIT_FROEVER);
-
-        ai_audio_wakeup_feed(msg.frame, msg.frame_len);
-
-        wakeup_evt = ai_audio_wakeup_detect_event();
-
-        if (true == ai_audio_is_awake()) {
-            ai_audio_cloud_asr_input(msg.frame, msg.frame_len);
-        } else {
-            ai_audio_cloud_asr_vad_input(msg.frame, msg.frame_len);
-        }
-
-        if (AI_AUDIO_WAKEUP_EVT_ENTER_IDLE == wakeup_evt) {
-            ai_audio_cloud_asr_stop();
-        } else if (AI_AUDIO_WAKEUP_EVT_WAKEUP == wakeup_evt) {
-            ai_audio_cloud_asr_start();
-        }
-
-        if (msg.frame) {
-            tkl_system_psram_free(msg.frame);
-        }
-    }
-}
-
-static OPERATE_RET __ai_audio_hardware_init(void)
-{
-    OPERATE_RET rt = OPRT_OK;
-
-    PR_DEBUG("tkl_audio_init...");
-
-    TKL_AUDIO_CONFIG_T config;
-    memset(&config, 0, sizeof(TKL_AUDIO_CONFIG_T));
-
-    config.ai_chn = TKL_AI_0;
-    config.sample = TKL_AUDIO_SAMPLE_16K;
-    config.datebits = TKL_AUDIO_DATABITS_16;
-    config.channel = TKL_AUDIO_CHANNEL_MONO;
-    config.codectype = TKL_CODEC_AUDIO_PCM;
-    config.card = TKL_AUDIO_TYPE_BOARD;
-    config.put_cb = __ai_audio_get_frame_cb;
-
-    config.spk_sample = TKL_AUDIO_SAMPLE_16K;
-    config.spk_gpio = SPEAKER_EN_PIN;
-    config.spk_gpio_polarity = TUYA_GPIO_LEVEL_LOW;
-
-    TUYA_CALL_ERR_RETURN(tkl_ai_init(&config, 0));
-    TUYA_CALL_ERR_RETURN(tkl_ai_start(0, 0));
-    TUYA_CALL_ERR_RETURN(tkl_ai_set_vol(TKL_AUDIO_TYPE_BOARD, 0, 80));
-
-    TUYA_CALL_ERR_RETURN(tkl_ao_set_vol(TKL_AUDIO_TYPE_BOARD, 0, NULL, ai_audio_get_volume()));
-
-    PR_DEBUG("tkl_audio_init success");
-
-    return OPRT_OK;
 }
 
 OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
 {
     OPERATE_RET rt = OPRT_OK;
+    AI_AUDIO_INPUT_CFG_T input_cfg;
 
     if (NULL == cfg) {
         return OPRT_INVALID_PARM;
     }
 
-    if (cfg->is_open_vad) {
-        TUYA_CALL_ERR_RETURN(ai_audio_wakeup_open_vad());
-        if (cfg->is_open_asr) {
-            TUYA_CALL_ERR_RETURN(ai_audio_wakeup_open_asr());
-        }
-    }
+    input_cfg.is_open_vad = cfg->is_open_vad;
+    input_cfg.is_open_asr = cfg->is_open_asr;
+    input_cfg.wakeup_timeout_ms = cfg->wakeup_timeout;
 
-    sg_is_support_interrupt = cfg->is_enable_interrupt;
+    TUYA_CALL_ERR_RETURN(ai_audio_input_init(&input_cfg, __ai_audio_input_inform_handle));
 
-    TUYA_CALL_ERR_RETURN(ai_audio_wakeup_init(cfg->wakeup_timeout, __ai_audio_silent_cb));
+    TUYA_CALL_ERR_RETURN(tkl_ao_set_vol(TKL_AUDIO_TYPE_BOARD, 0, NULL, ai_audio_get_volume()));
 
     TUYA_CALL_ERR_RETURN(ai_audio_cloud_asr_init(cfg->is_enable_interrupt));
 
@@ -221,13 +120,6 @@ OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
 
     TUYA_CALL_ERR_RETURN(ai_audio_agent_init(__ai_audio_agent_msg_cb));
     sg_ai_agent_msg_cb = cfg->agent_msg_cb;
-
-    TUYA_CALL_ERR_RETURN(__ai_audio_hardware_init());
-
-    //  TUYA_CALL_ERR_RETURN(tal_queue_create_init(&sg_ai_audio_frame_queue, sizeof(AI_AUDIO_FRAME_MSG_T), 50));
-
-    //  TUYA_CALL_ERR_RETURN(tkl_thread_create_in_psram(&sg_ai_audio_thrd_hdl, "ai_audio", 1024 * 4, THREAD_PRIO_2,
-    //                                                   __ai_audio_handle_frame_task, NULL));
 
     return OPRT_OK;
 }
@@ -273,11 +165,9 @@ uint8_t ai_audio_get_volume(void)
 OPERATE_RET ai_audio_set_silent(bool is_silent)
 {
     if (true == is_silent) {
-        ai_audio_set_wakeup_manual(false);
-        ai_audio_player_stop();
-        ai_audio_cloud_asr_stop();
+        ai_audio_input_stop();
     } else {
-        ai_audio_set_wakeup_manual(true);
+        ai_audio_input_start();
     }
 
     sg_ai_audio_is_silent = is_silent;

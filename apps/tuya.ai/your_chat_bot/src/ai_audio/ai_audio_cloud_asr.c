@@ -247,10 +247,10 @@ OPERATE_RET ai_audio_cloud_asr_input(const void *data, uint32_t len)
     }
 
     tal_mutex_lock(sg_ai_cloud_asr.mutex);
-    rt = tuya_ring_buff_write(sg_ai_cloud_asr.rb_hdl, data, len);
+    tuya_ring_buff_write(sg_ai_cloud_asr.rb_hdl, data, len);
     tal_mutex_unlock(sg_ai_cloud_asr.mutex);
 
-    return rt;
+    return OPRT_OK;
 }
 
 OPERATE_RET ai_audio_cloud_asr_vad_input(const void *data, uint32_t len)

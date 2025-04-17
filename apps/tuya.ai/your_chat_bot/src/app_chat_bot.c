@@ -65,7 +65,7 @@ static APP_CHAT_BOT_S sg_chat_bot = {
                     .active_level = TUYA_GPIO_LEVEL_HIGH,
                 },
         },
-    .work_mode = APP_CHAT_BOT_WORK_MODE_ONE_SHOT,
+    .work_mode = APP_CHAT_BOT_WORK_MODE_WAKEUP,
 };
 
 /***********************************************************
@@ -192,12 +192,12 @@ OPERATE_RET app_chat_bot_init(void)
         ai_audio_cfg.wakeup_timeout = 0;
     } else if (sg_chat_bot.work_mode == APP_CHAT_BOT_WORK_MODE_WAKEUP) {
         ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 0;
+        ai_audio_cfg.is_open_asr = 1;
         ai_audio_cfg.is_open_vad = 1;
         ai_audio_cfg.wakeup_timeout = AI_WAKEUP_TIMEOUT_MS;
     } else {
         ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 0;
+        ai_audio_cfg.is_open_asr = 1;
         ai_audio_cfg.is_open_vad = 1;
         ai_audio_cfg.wakeup_timeout = AI_WAKEUP_TIMEOUT_MS;
     }

@@ -8,7 +8,7 @@
 #include "ai_audio_agent.h"
 #include "ai_audio_cloud_asr.h"
 #include "ai_audio_player.h"
-#include "ai_audio_wakeup.h"
+#include "ai_audio_input.h"
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
