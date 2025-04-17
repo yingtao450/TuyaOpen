@@ -6,3 +6,5 @@
    :glob:
 
    lcd.md
+   touch.md
+   encoder.md

@@ -6,3 +6,5 @@ Peripheral Development And Application
    :glob:
 
    lcd.md
+   touch.md
+   encoder.md
