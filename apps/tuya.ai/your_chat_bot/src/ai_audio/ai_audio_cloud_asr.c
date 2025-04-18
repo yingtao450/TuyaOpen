@@ -157,6 +157,13 @@ static void __ai_audio_cloud_asr_task(void *arg)
         case AI_CLOUD_ASR_STATE_WAIT_ASR: {
             // wait cloud asr response, nothing to do
         } break;
+        case AI_CLOUD_ASR_STATE_UPLOAD_INTERUPT: {
+            ai_audio_agent_upload_intrrupt();
+            if (tal_sw_timer_is_running(sg_ai_cloud_asr.asr_timer_id)) {
+                tal_sw_timer_stop(sg_ai_cloud_asr.asr_timer_id);
+            }
+            AI_CLOUD_ASR_STAT_CHANGE(AI_CLOUD_ASR_STATE_IDLE);
+        } break;
         default:
             break;
         }
@@ -282,12 +289,11 @@ OPERATE_RET ai_audio_cloud_asr_start(void)
         return OPRT_COM_ERROR;
     }
 
-    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_IDLE) {
-        PR_DEBUG("cloud asr is started state:%d", sg_ai_cloud_asr.state);
-        return OPRT_OK;
-    }
-
     tal_mutex_lock(sg_ai_cloud_asr.mutex);
+
+    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_IDLE) {
+        __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_UPLOAD_INTERUPT);
+    }
 
     __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_UPLOAD_START);
 
@@ -302,7 +308,8 @@ OPERATE_RET ai_audio_cloud_asr_stop(void)
         return OPRT_COM_ERROR;
     }
 
-    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_UPLOADING) {
+    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_UPLOADING &&
+        sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_UPLOAD_START) {
         return OPRT_OK;
     }
 
@@ -320,7 +327,7 @@ OPERATE_RET ai_audio_cloud_asr_stop(void)
  * @param None
  * @return OPERATE_RET - OPRT_OK if the reset operation is successful, otherwise an error code.
  */
-OPERATE_RET ai_audio_cloud_asr_reset(void)
+OPERATE_RET ai_audio_cloud_asr_rb_reset(void)
 {
     OPERATE_RET rt = OPRT_OK;
     uint32_t rb_used_size = 0;
@@ -330,12 +337,27 @@ OPERATE_RET ai_audio_cloud_asr_reset(void)
     }
 
     tal_mutex_lock(sg_ai_cloud_asr.mutex);
-
-    __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_IDLE);
-
     rb_used_size = tuya_ring_buff_used_size_get(sg_ai_cloud_asr.rb_hdl);
     if (rb_used_size) {
         tuya_ring_buff_reset(sg_ai_cloud_asr.rb_hdl);
+    }
+    tal_mutex_unlock(sg_ai_cloud_asr.mutex);
+
+    return rt;
+}
+
+OPERATE_RET ai_audio_cloud_asr_idle(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+    uint32_t rb_used_size = 0;
+
+    if (NULL == sg_ai_cloud_asr.rb_hdl || NULL == sg_ai_cloud_asr.mutex) {
+        return OPRT_COM_ERROR;
+    }
+
+    tal_mutex_lock(sg_ai_cloud_asr.mutex);
+    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_IDLE) {
+        __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_IDLE);
     }
     tal_mutex_unlock(sg_ai_cloud_asr.mutex);
 

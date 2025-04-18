@@ -80,24 +80,19 @@ static void __app_ai_msg_cb(AI_AGENT_MSG_T *msg)
 
     switch (msg->type) {
     case AI_AGENT_MSG_TP_TEXT_ASR: {
-        PR_DEBUG("---> AI_MSG_TYPE_TEXT_ASR");
         if (msg->data_len > 0) {
             // send asr text to display
             tuya_display_send_msg(TY_DISPLAY_TP_HUMAN_CHAT, (char *)msg->data, msg->data_len);
         }
     } break;
     case AI_AGENT_MSG_TP_TEXT_NLG: {
-        PR_DEBUG("---> AI_MSG_TYPE_TEXT_NLG");
         tuya_display_send_msg(TY_DISPLAY_TP_AI_CHAT, (char *)msg->data, msg->data_len);
     } break;
     case AI_AGENT_MSG_TP_AUDIO_START: {
-        PR_DEBUG("---> AI_MSG_TYPE_AUDIO_START");
     } break;
     case AI_AGENT_MSG_TP_AUDIO_DATA: {
-        PR_DEBUG("---> AI_MSG_TYPE_AUDIO_DATA, len: %d", msg->data_len);
     } break;
     case AI_AGENT_MSG_TP_AUDIO_STOP: {
-        PR_DEBUG("---> AI_MSG_TYPE_AUDIO_STOP");
     } break;
     case AI_AGENT_MSG_TP_EMOTION: {
         PR_DEBUG("---> AI_MSG_TYPE_EMOTION");
@@ -182,24 +177,20 @@ OPERATE_RET app_chat_bot_init(void)
     ai_audio_cfg.agent_msg_cb = __app_ai_msg_cb;
     if (sg_chat_bot.work_mode == APP_CHAT_BOT_WORK_MODE_HOLD) {
         ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 0;
-        ai_audio_cfg.is_open_vad = 0;
-        ai_audio_cfg.wakeup_timeout = 0;
+        ai_audio_cfg.wakeup_tp = AI_AUDIO_INPUT_WAKEUP_MANUAL;
     } else if (sg_chat_bot.work_mode == APP_CHAT_BOT_WORK_MODE_ONE_SHOT) {
         ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 0;
-        ai_audio_cfg.is_open_vad = 1;
-        ai_audio_cfg.wakeup_timeout = 0;
+        ai_audio_cfg.wakeup_tp = AI_AUDIO_INPUT_WAKEUP_VAD;
     } else if (sg_chat_bot.work_mode == APP_CHAT_BOT_WORK_MODE_WAKEUP) {
-        ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 1;
-        ai_audio_cfg.is_open_vad = 1;
-        ai_audio_cfg.wakeup_timeout = AI_WAKEUP_TIMEOUT_MS;
+        ai_audio_cfg.is_enable_interrupt = 1;
+        ai_audio_cfg.is_session_continue = 0;
+        ai_audio_cfg.wakeup_tp = AI_AUDIO_INPUT_WAKEUP_ASR;
+        ai_audio_cfg.asr_wakeup_timeout_ms = 20000;
     } else {
-        ai_audio_cfg.is_enable_interrupt = 0;
-        ai_audio_cfg.is_open_asr = 1;
-        ai_audio_cfg.is_open_vad = 1;
-        ai_audio_cfg.wakeup_timeout = AI_WAKEUP_TIMEOUT_MS;
+        ai_audio_cfg.is_enable_interrupt = 1;
+        ai_audio_cfg.wakeup_tp = AI_AUDIO_INPUT_WAKEUP_ASR;
+        ai_audio_cfg.asr_wakeup_timeout_ms = 20000;
+        ai_audio_cfg.is_session_continue = 1;
     }
     TUYA_CALL_ERR_RETURN(ai_audio_init(&ai_audio_cfg));
 

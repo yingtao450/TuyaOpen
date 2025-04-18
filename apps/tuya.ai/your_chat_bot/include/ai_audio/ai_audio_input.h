@@ -22,7 +22,8 @@ extern "C" {
 ***********************************************************/
 typedef enum {
     AI_AUDIO_INPUT_STATE_IDLE,
-    AI_AUDIO_INPUT_STATE_DETECTING, // detect vad and wakeup keyword
+    AI_AUDIO_INPUT_STATE_DETECTING,     // detect vad and wakeup keyword
+    AI_AUDIO_INPUT_STATE_DETECTED_WORD, // detected wakeup word
     AI_AUDIO_INPUT_STATE_AWAKE,
 } AI_AUDIO_INPUT_STATE_E;
 
@@ -30,19 +31,24 @@ typedef enum {
     AI_AUDIO_INPUT_EVT_IDLE,
     AI_AUDIO_INPUT_EVT_ENTER_DETECT, // detecting vad and wakeup keywor
     AI_AUDIO_INPUT_EVT_DETECTING,
+    AI_AUDIO_INPUT_EVT_ASR_WORD,
     AI_AUDIO_INPUT_EVT_WAKEUP,
-    AI_AUDIO_INPUT_EVT_ASR_WAKEUP,
     AI_AUDIO_INPUT_EVT_AWAKE,
 } AI_AUDIO_INPUT_EVENT_E;
 
+typedef enum {
+    AI_AUDIO_INPUT_WAKEUP_MANUAL, // manual trigger wakeup
+    AI_AUDIO_INPUT_WAKEUP_VAD,    // detect vad
+    AI_AUDIO_INPUT_WAKEUP_ASR,    // detect vad and asr wakeup keyword
+} AI_AUDIO_INPUT_WAKEUP_TP_E;
+
 typedef struct {
-    uint8_t is_open_vad;
-    uint8_t is_open_asr;
+    AI_AUDIO_INPUT_WAKEUP_TP_E wakeup_tp;
+    uint32_t asr_wakeup_timeout_ms;
     uint8_t is_enable_interrupt;
-    uint8_t wakeup_timeout_ms;
 } AI_AUDIO_INPUT_CFG_T;
 
-typedef void (*AI_AUDIO_INOUT_INFORM_CB)(AI_AUDIO_INPUT_EVENT_E state, uint8_t *data, uint32_t len, void *arg);
+typedef void (*AI_AUDIO_INOUT_INFORM_CB)(AI_AUDIO_INPUT_EVENT_E event, uint8_t *data, uint32_t len, void *arg);
 
 /***********************************************************
 ********************function declaration********************
@@ -50,15 +56,21 @@ typedef void (*AI_AUDIO_INOUT_INFORM_CB)(AI_AUDIO_INPUT_EVENT_E state, uint8_t *
 
 OPERATE_RET ai_audio_input_init(AI_AUDIO_INPUT_CFG_T *cfg, AI_AUDIO_INOUT_INFORM_CB cb);
 
-OPERATE_RET ai_audio_input_start(void);
+OPERATE_RET ai_audio_input_open(void);
 
-OPERATE_RET ai_audio_input_stop(void);
+OPERATE_RET ai_audio_input_close(void);
 
 OPERATE_RET ai_audio_input_restart(void);
 
+OPERATE_RET ai_audio_input_pause(uint8_t is_pause);
+
 AI_AUDIO_INPUT_STATE_E ai_audio_input_get_state(void);
 
-OPERATE_RET ai_audio_input_deinit(void);
+AI_AUDIO_INPUT_WAKEUP_TP_E ai_audio_input_get_wakeup_tp(void);
+
+OPERATE_RET ai_audio_input_restart_asr_detect_wakeup_word(void);
+
+OPERATE_RET ai_audio_input_trigger_asr_awake(void);
 
 #ifdef __cplusplus
 }

@@ -17,11 +17,10 @@
 ***********************typedef define***********************
 ***********************************************************/
 typedef struct {
-    uint8_t is_open_vad;
-    uint8_t is_open_asr;
+    AI_AUDIO_INPUT_WAKEUP_TP_E wakeup_tp;
+    uint32_t asr_wakeup_timeout_ms;
+    uint8_t is_session_continue;
     uint8_t is_enable_interrupt;
-    uint32_t wakeup_timeout;
-
     AI_AGENT_MSG_CB agent_msg_cb;
 } AI_AUDIO_CONFIG_T;
 

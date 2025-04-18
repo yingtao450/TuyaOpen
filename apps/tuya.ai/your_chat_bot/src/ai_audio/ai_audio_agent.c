@@ -244,28 +244,30 @@ static OPERATE_RET __ai_agent_session_create(void)
     memset(&cfg, 0, sizeof(AI_SESSION_CFG_T));
     cfg.send_num = TY_AI_CHAT_ID_DS_CNT;
     cfg.send[0].type = AI_PT_AUDIO;
-    cfg.send[0].id = TY_AI_CHAT_ID_DS_AUDIO;
+    cfg.send[0].id = tuya_ai_biz_get_send_id();
     cfg.send[0].get_cb = NULL;
     cfg.send[0].free_cb = NULL;
     cfg.send[1].type = AI_PT_VIDEO;
-    cfg.send[1].id = TY_AI_CHAT_ID_DS_VIDEO;
+    cfg.send[1].id = tuya_ai_biz_get_send_id();
     cfg.send[1].get_cb = NULL;
     cfg.send[1].free_cb = NULL;
     cfg.send[2].type = AI_PT_TEXT;
-    cfg.send[2].id = TY_AI_CHAT_ID_DS_TEXT;
+    cfg.send[2].id = tuya_ai_biz_get_send_id();
     cfg.send[2].get_cb = NULL;
     cfg.send[2].free_cb = NULL;
     cfg.send[3].type = AI_PT_IMAGE;
-    cfg.send[3].id = TY_AI_CHAT_ID_DS_IMAGE;
+    cfg.send[3].id = tuya_ai_biz_get_send_id();
     cfg.send[3].get_cb = NULL;
     cfg.send[3].free_cb = NULL;
+
     cfg.recv_num = TY_AI_CHAT_ID_US_CNT;
-    cfg.recv[1].id = TY_AI_CHAT_ID_US_AUDIO;
+    cfg.recv[1].id = tuya_ai_biz_get_recv_id();
     cfg.recv[1].cb = __ai_agent_audio_recv;
     cfg.recv[1].usr_data = NULL;
-    cfg.recv[0].id = TY_AI_CHAT_ID_US_TEXT;
+    cfg.recv[0].id = tuya_ai_biz_get_recv_id();
     cfg.recv[0].cb = __ai_agent_txt_recv;
     cfg.recv[0].usr_data = NULL;
+
     cfg.event_cb = __ai_agent_event_recv;
 
     // 支持的tts格式
@@ -537,6 +539,20 @@ OPERATE_RET ai_audio_agent_upload_stop(void)
     }
 
     TUYA_CALL_ERR_RETURN(tuya_ai_event_end(sg_ai.session_id, sg_ai.event_id, NULL, 0));
+
+    return rt;
+}
+
+/**
+ * @brief Intrrupt the AI upload process.
+ * @param None
+ * @return OPERATE_RET - OPRT_OK on success, or an error code on failure.
+ */
+OPERATE_RET ai_audio_agent_upload_intrrupt(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    TUYA_CALL_ERR_RETURN(tuya_ai_event_chat_break(sg_ai.session_id, sg_ai.event_id, NULL, 0));
 
     return rt;
 }

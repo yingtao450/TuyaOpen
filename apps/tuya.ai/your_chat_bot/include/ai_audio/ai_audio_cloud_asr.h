@@ -32,6 +32,7 @@ typedef enum {
     AI_CLOUD_ASR_STATE_UPLOADING,
     AI_CLOUD_ASR_STATE_UPLOAD_STOP,
     AI_CLOUD_ASR_STATE_WAIT_ASR, // wait cloud asr response timeout
+    AI_CLOUD_ASR_STATE_UPLOAD_INTERUPT,
 } AI_CLOUD_ASR_STATE_E;
 
 /***********************************************************
@@ -67,8 +68,9 @@ OPERATE_RET ai_audio_cloud_asr_stop(void);
  * @param None
  * @return OPERATE_RET - OPRT_OK if the reset operation is successful, otherwise an error code.
  */
-OPERATE_RET ai_audio_cloud_asr_reset(void);
+OPERATE_RET ai_audio_cloud_asr_rb_reset(void);
 
+OPERATE_RET ai_audio_cloud_asr_idle(void);
 /**
  * @brief Retrieves the current state of the audio recorder.
  * @param None

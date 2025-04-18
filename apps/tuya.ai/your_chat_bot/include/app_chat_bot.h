@@ -21,8 +21,7 @@ typedef uint8_t APP_WORK_MODE_E;
 #define APP_CHAT_BOT_WORK_MODE_HOLD     0
 #define APP_CHAT_BOT_WORK_MODE_ONE_SHOT 1
 #define APP_CHAT_BOT_WORK_MODE_WAKEUP   2
-// TODO: wait add
-#define APP_CHAT_BOT_WORK_MODE_FREE 3
+#define APP_CHAT_BOT_WORK_MODE_FREE     3
 
 /***********************************************************
 ***********************typedef define***********************
