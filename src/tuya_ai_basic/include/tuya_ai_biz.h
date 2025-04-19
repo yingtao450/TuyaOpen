@@ -200,4 +200,18 @@ OPERATE_RET tuya_ai_send_biz_pkt(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKE
  */
 OPERATE_RET tuya_ai_biz_init(void);
 
+/**
+ * @brief get send id
+ *
+ * @return send id
+ */
+int tuya_ai_biz_get_send_id(void);
+
+/**
+ * @brief get recv id
+ *
+ * @return recv id
+ */
+int tuya_ai_biz_get_recv_id(void);
+
 #endif /* __TUYA_AI_BIZ_H__ */

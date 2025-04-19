@@ -46,7 +46,10 @@ typedef enum {
     AI_AUDIO_ALERT_BATTERY_LOW,
     AI_AUDIO_ALERT_PLEASE_AGAIN,
     AI_AUDIO_ALERT_WAKEUP,
-    AI_AUDIO_ALERT_MAX,
+    AI_AUDIO_ALERT_LONG_KEY_TALK,
+    AI_AUDIO_ALERT_KEY_TALK,
+    AI_AUDIO_ALERT_WAKEUP_TALK,
+    AI_AUDIO_ALERT_FREE_TALK,
 } AI_AUDIO_ALERT_TYPE_E;
 
 /***********************************************************

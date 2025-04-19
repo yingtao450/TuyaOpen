@@ -16,19 +16,14 @@
 #include "tuya_ringbuf.h"
 
 #include "ai_audio_agent.h"
+#include "ai_audio_input.h"
 #include "ai_audio_cloud_asr.h"
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
 #define AI_AUDIO_RB_TIME_MS (10 * 1000)
-
 #define AI_AUDIO_UPLOAD_TIME_MS (100)
-
-#define AI_AUDIO_UPLOAD_VAD_TM_MS (300 + 300) // vad active duration is 300ms, add 300ms to upload
-
 #define AI_AUDIO_WAIT_ASR_TM_MS (10 * 1000)
-
-#define AI_AUDIO_VOICE_FRAME_LEN_GET(tm_ms) ((tm_ms) / AI_AUDIO_ASR_FRAME_TM_MS * AI_AUDIO_ASR_FRAME_SIZE)
 
 #define AI_CLOUD_ASR_STAT_CHANGE(new_stat)                                                                             \
     do {                                                                                                               \
@@ -39,19 +34,20 @@
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
+// clang-format off
 typedef struct {
-    TUYA_RINGBUFF_T rb_hdl;
-    MUTEX_HANDLE mutex;
-    THREAD_HANDLE thrd_hdl;
-    TIMER_ID asr_timer_id;
-    bool is_enable_interrupt;
+    TUYA_RINGBUFF_T      rb_hdl;
+    MUTEX_HANDLE         mutex;
+    THREAD_HANDLE        thrd_hdl;
+    TIMER_ID             asr_timer_id;
+    bool                 is_enable_interrupt;
 
     AI_CLOUD_ASR_STATE_E state;
-    QUEUE_HANDLE stat_queue;
+    QUEUE_HANDLE         stat_queue;
 
-    uint8_t *upload_buffer;
+    uint8_t              *upload_buffer;
 } AI_AUDIO_CLOUD_ASR_T;
-
+// clang-format on
 /***********************************************************
 ********************function declaration********************
 ***********************************************************/
@@ -273,8 +269,8 @@ OPERATE_RET ai_audio_cloud_asr_vad_input(const void *data, uint32_t len)
 
     tuya_ring_buff_write(sg_ai_cloud_asr.rb_hdl, data, len);
 
-    if (rb_used_size > AI_AUDIO_VOICE_FRAME_LEN_GET(AI_AUDIO_UPLOAD_VAD_TM_MS)) {
-        uint32_t discard_size = rb_used_size - AI_AUDIO_VOICE_FRAME_LEN_GET(AI_AUDIO_UPLOAD_VAD_TM_MS);
+    if (rb_used_size > AI_AUDIO_VOICE_FRAME_LEN_GET(AI_AUDIO_VAD_ACITVE_TM_MS)) {
+        uint32_t discard_size = rb_used_size - AI_AUDIO_VOICE_FRAME_LEN_GET(AI_AUDIO_VAD_ACITVE_TM_MS);
         tuya_ring_buff_discard(sg_ai_cloud_asr.rb_hdl, discard_size);
     }
 
@@ -322,6 +318,26 @@ OPERATE_RET ai_audio_cloud_asr_stop(void)
     return OPRT_OK;
 }
 
+OPERATE_RET ai_audio_cloud_stop_wait_asr(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if (NULL == sg_ai_cloud_asr.rb_hdl || NULL == sg_ai_cloud_asr.mutex) {
+        return OPRT_COM_ERROR;
+    }
+
+    if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_WAIT_ASR) {
+        PR_NOTICE("the state is not wait cloud asr");
+        return OPRT_COM_ERROR;
+    }
+
+    tal_mutex_lock(sg_ai_cloud_asr.mutex);
+    __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_IDLE);
+    tal_mutex_unlock(sg_ai_cloud_asr.mutex);
+
+    return OPRT_OK;
+}
+
 /**
  * @brief Resets the audio recorder's ring buffer if it is not empty.
  * @param None
@@ -349,13 +365,17 @@ OPERATE_RET ai_audio_cloud_asr_rb_reset(void)
 OPERATE_RET ai_audio_cloud_asr_idle(void)
 {
     OPERATE_RET rt = OPRT_OK;
-    uint32_t rb_used_size = 0;
 
     if (NULL == sg_ai_cloud_asr.rb_hdl || NULL == sg_ai_cloud_asr.mutex) {
         return OPRT_COM_ERROR;
     }
 
     tal_mutex_lock(sg_ai_cloud_asr.mutex);
+    if (sg_ai_cloud_asr.state == AI_CLOUD_ASR_STATE_UPLOADING ||
+        sg_ai_cloud_asr.state == AI_CLOUD_ASR_STATE_UPLOAD_START) {
+        __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_UPLOAD_INTERUPT);
+    }
+
     if (sg_ai_cloud_asr.state != AI_CLOUD_ASR_STATE_IDLE) {
         __ai_audio_cloud_asr_post_state(AI_CLOUD_ASR_STATE_IDLE);
     }
@@ -371,9 +391,12 @@ OPERATE_RET ai_audio_cloud_asr_idle(void)
  */
 AI_CLOUD_ASR_STATE_E ai_audio_cloud_asr_get_state(void)
 {
-    if (NULL == sg_ai_cloud_asr.mutex) {
-        return AI_CLOUD_ASR_STATE_IDLE;
-    }
-
     return sg_ai_cloud_asr.state;
+}
+
+OPERATE_RET ai_audio_cloud_asr_enable_intrrupt(bool is_enable)
+{
+    sg_ai_cloud_asr.is_enable_interrupt = is_enable;
+
+    return OPRT_OK;
 }

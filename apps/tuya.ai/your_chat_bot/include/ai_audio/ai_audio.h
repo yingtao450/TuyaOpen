@@ -12,16 +12,19 @@
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
+typedef uint8_t  AI_AUDIO_WORK_MODE_E;
+#define AI_AUDIO_WORK_MODE_HOLD         1
+#define AI_AUDIO_WORK_MODE_TRIGGER      2
+#define AI_AUDIO_WORK_MODE_WAKEUP       3
+#define AI_AUDIO_WORK_MODE_FREE         4
 
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
+
 typedef struct {
-    AI_AUDIO_INPUT_WAKEUP_TP_E wakeup_tp;
-    uint32_t asr_wakeup_timeout_ms;
-    uint8_t is_session_continue;
-    uint8_t is_enable_interrupt;
-    AI_AGENT_MSG_CB agent_msg_cb;
+    AI_AUDIO_WORK_MODE_E    work_mode;
+    AI_AGENT_MSG_CB         agent_msg_cb;
 } AI_AUDIO_CONFIG_T;
 
 /***********************************************************
@@ -41,6 +44,6 @@ OPERATE_RET ai_audio_set_volume(uint8_t volume);
 
 uint8_t ai_audio_get_volume(void);
 
-OPERATE_RET ai_audio_set_silent(bool is_silent);
+OPERATE_RET ai_audio_set_open(bool is_open);
 
-bool ai_audio_is_silent(void);
+OPERATE_RET ai_audio_set_work_mode(AI_AUDIO_WORK_MODE_E work_mode);

@@ -19,6 +19,13 @@
 ***********************************************************/
 #define AI_AUDIO_SPEAK_VOLUME_KEY "spk_volume"
 
+#define AI_AUDIO_INPUT_EVT_CHANGE(last_evt, new_evt)                                                                \
+    do {                                                                                                            \
+        if(last_evt != new_evt) {                                                                                   \
+            PR_DEBUG("ai audio event changed: %d->%d", last_evt, new_evt);                                          \
+        }                                                                                                           \
+    } while (0)
+
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
@@ -34,16 +41,16 @@ typedef struct {
 /***********************************************************
 ***********************variable define**********************
 ***********************************************************/
-static bool sg_ai_audio_is_silent = true;
+static bool sg_ai_audio_is_work = false;
 static AI_AGENT_MSG_CB sg_ai_agent_msg_cb = NULL;
-static bool sg_is_session_continue = false;
+static AI_AUDIO_WORK_MODE_E sg_ai_audio_work_mode = AI_AUDIO_WORK_MODE_HOLD;
 static bool sg_is_ai_speaking = false;
+static bool sg_is_enable_intrrupt = false;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
 static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
 {
-
     switch (msg->type) {
     case AI_AGENT_MSG_TP_TEXT_ASR: {
         if (msg->data_len > 0) {
@@ -55,11 +62,7 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
             ai_audio_player_start();
         }
 
-        if (AI_CLOUD_ASR_STATE_WAIT_ASR == ai_audio_cloud_asr_get_state()) {
-            PR_DEBUG("get cloud asr, set idle");
-            ai_audio_cloud_asr_idle();
-        }
-
+        ai_audio_cloud_stop_wait_asr();
     } break;
     case AI_AGENT_MSG_TP_AUDIO_DATA: {
         sg_is_ai_speaking = true;
@@ -68,12 +71,10 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
     case AI_AGENT_MSG_TP_AUDIO_STOP: {
         ai_audio_player_data_write(msg->data, msg->data_len, 1);
 
-        if (AI_AUDIO_INPUT_WAKEUP_ASR == ai_audio_input_get_wakeup_tp()) {
-            if (false == sg_is_session_continue) {
-                ai_audio_input_restart_asr_detect_wakeup_word();
-            } else {
-                ai_audio_input_trigger_asr_awake();
-            }
+        if (AI_AUDIO_WORK_MODE_WAKEUP == sg_ai_audio_work_mode) {
+            ai_audio_input_restart_asr_detect_wakeup_word();
+        }else if(AI_AUDIO_WORK_MODE_FREE == sg_ai_audio_work_mode) {
+            ai_audio_input_trigger_asr_awake();
         }
         sg_is_ai_speaking = false;
     } break;
@@ -88,7 +89,9 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
 
 static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, uint8_t *data, uint32_t len, void *arg)
 {
-    static bool is_need_filter = false;
+    static AI_AUDIO_INPUT_EVENT_E last_evt = 0xFF;
+
+    AI_AUDIO_INPUT_EVT_CHANGE(last_evt, event);
 
     switch (event) {
     case AI_AUDIO_INPUT_EVT_IDLE:
@@ -109,16 +112,9 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, uint8_t
         }
 
         ai_audio_player_play_alert_syn(AI_AUDIO_ALERT_WAKEUP);
-        ai_audio_input_filter_player_voice(true);
-        is_need_filter = true;
         break;
     case AI_AUDIO_INPUT_EVT_WAKEUP: {
         TKL_ASR_WAKEUP_WORD_E key_word = TKL_ASR_WAKEUP_WORD_UNKNOWN;
-
-        if (is_need_filter) {
-            ai_audio_input_filter_player_voice(false);
-            is_need_filter = false;
-        }
 
         ai_audio_cloud_asr_input(data, len);
         ai_audio_cloud_asr_start();
@@ -130,7 +126,24 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, uint8_t
             ai_audio_cloud_asr_input(data, len);
         }
         break;
+     }
+
+     last_evt = event;
+}
+
+static AI_AUDIO_INPUT_WAKEUP_TP_E __get_input_wakeup_type(AI_AUDIO_WORK_MODE_E work_mode)
+{
+    AI_AUDIO_INPUT_WAKEUP_TP_E wakeup_tp = 0;
+
+    if(work_mode == AI_AUDIO_WORK_MODE_HOLD) {
+        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_MANUAL;
+    }else if(work_mode == AI_AUDIO_WORK_MODE_TRIGGER){
+        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_VAD;
+    }else {
+        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_ASR;
     }
+
+    return wakeup_tp;
 }
 
 OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
@@ -142,15 +155,19 @@ OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
         return OPRT_INVALID_PARM;
     }
 
-    input_cfg.wakeup_tp = cfg->wakeup_tp;
-    input_cfg.asr_wakeup_timeout_ms = cfg->asr_wakeup_timeout_ms;
-    sg_is_session_continue = cfg->is_session_continue;
+    input_cfg.wakeup_tp = __get_input_wakeup_type(cfg->work_mode);
+    sg_ai_audio_work_mode = cfg->work_mode;
+
+    if(cfg->work_mode == AI_AUDIO_WORK_MODE_WAKEUP ||\
+       cfg->work_mode == AI_AUDIO_WORK_MODE_FREE ) {
+        sg_is_enable_intrrupt = true;
+    }
 
     TUYA_CALL_ERR_RETURN(ai_audio_input_init(&input_cfg, __ai_audio_input_inform_handle));
 
     TUYA_CALL_ERR_RETURN(tkl_ao_set_vol(TKL_AUDIO_TYPE_BOARD, 0, NULL, ai_audio_get_volume()));
 
-    TUYA_CALL_ERR_RETURN(ai_audio_cloud_asr_init(cfg->is_enable_interrupt));
+    TUYA_CALL_ERR_RETURN(ai_audio_cloud_asr_init(sg_is_enable_intrrupt));
 
     TUYA_CALL_ERR_RETURN(ai_audio_player_init());
 
@@ -198,20 +215,55 @@ uint8_t ai_audio_get_volume(void)
     return volume;
 }
 
-OPERATE_RET ai_audio_set_silent(bool is_silent)
+OPERATE_RET ai_audio_set_open(bool is_open)
 {
-    if (true == is_silent) {
-        ai_audio_input_close();
-    } else {
-        ai_audio_input_open();
+    if(sg_ai_audio_is_work == is_open){
+        PR_NOTICE("ai audio is already %d", is_open);
+        return OPRT_OK;
     }
 
-    sg_ai_audio_is_silent = is_silent;
+    if(is_open) {
+        ai_audio_input_open();
+    }else {
+        if (ai_audio_player_is_playing()) {
+            ai_audio_player_stop();
+        }
+
+        ai_audio_input_close();
+
+        if(sg_ai_audio_work_mode != AI_AUDIO_WORK_MODE_HOLD) {
+            ai_audio_cloud_asr_idle();
+            ai_audio_cloud_asr_rb_reset();
+        }
+    }
+
+    sg_is_ai_speaking = false;
+    sg_ai_audio_is_work = is_open;
 
     return OPRT_OK;
 }
 
-bool ai_audio_is_silent(void)
+OPERATE_RET ai_audio_set_work_mode(AI_AUDIO_WORK_MODE_E work_mode)
 {
-    return sg_ai_audio_is_silent;
+    if(true == sg_ai_audio_is_work) {
+        PR_ERR("audio module is open please close it first");
+        return OPRT_COM_ERROR;
+    }
+
+    ai_audio_cloud_asr_idle();
+    ai_audio_cloud_asr_rb_reset();
+
+    ai_audio_input_set_wakeup_tp(__get_input_wakeup_type(work_mode));
+
+    if(work_mode == AI_AUDIO_WORK_MODE_WAKEUP ||\
+       work_mode == AI_AUDIO_WORK_MODE_FREE ) {
+        sg_is_enable_intrrupt = true;
+    }else {
+        sg_is_enable_intrrupt = false;
+    }
+    ai_audio_cloud_asr_enable_intrrupt(sg_is_enable_intrrupt);
+
+    sg_ai_audio_work_mode = work_mode;
+
+    return OPRT_OK;
 }

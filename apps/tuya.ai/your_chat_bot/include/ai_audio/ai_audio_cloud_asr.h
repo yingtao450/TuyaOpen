@@ -22,9 +22,6 @@ extern "C" {
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-// PCM frame size: 320 bytes
-#define AI_AUDIO_ASR_FRAME_TM_MS (10)
-#define AI_AUDIO_ASR_FRAME_SIZE  (320)
 
 typedef enum {
     AI_CLOUD_ASR_STATE_IDLE = 0,
@@ -63,6 +60,8 @@ OPERATE_RET ai_audio_cloud_asr_start(void);
 
 OPERATE_RET ai_audio_cloud_asr_stop(void);
 
+OPERATE_RET ai_audio_cloud_stop_wait_asr(void);
+
 /**
  * @brief Resets the audio recorder's ring buffer if it is not empty.
  * @param None
@@ -77,6 +76,8 @@ OPERATE_RET ai_audio_cloud_asr_idle(void);
  * @return APP_RECORDER_STATE_E - The current state of the audio recorder.
  */
 AI_CLOUD_ASR_STATE_E ai_audio_cloud_asr_get_state(void);
+
+OPERATE_RET ai_audio_cloud_asr_enable_intrrupt(bool is_enable);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,7 @@ typedef uint8_t APP_WORK_MODE_E;
 #define APP_CHAT_BOT_WORK_MODE_ONE_SHOT 1
 #define APP_CHAT_BOT_WORK_MODE_WAKEUP   2
 #define APP_CHAT_BOT_WORK_MODE_FREE     3
-
+#define APP_CHAT_BOT_WORK_MODE_MAX      4
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
@@ -38,6 +38,8 @@ APP_WORK_MODE_E app_chat_bot_get_work_mode(void);
 OPERATE_RET app_chat_bot_enable_set(uint8_t enable);
 
 uint8_t app_chat_bot_is_enable(void);
+
+OPERATE_RET app_chat_bot_set_next_mode(void);
 
 #ifdef __cplusplus
 }
