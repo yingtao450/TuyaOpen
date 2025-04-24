@@ -50,7 +50,7 @@ OPERATE_RET ai_audio_cloud_asr_update_vad_data(void);
  * @param None
  * @return OPERATE_RET - OPRT_OK if the start operation is successful, otherwise an error code.
  */
-OPERATE_RET ai_audio_cloud_asr_start(void);
+OPERATE_RET ai_audio_cloud_asr_start(bool is_forced_intrrupt);
 
 /**
  * @brief Stops the audio cloud ASR process.
