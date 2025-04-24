@@ -122,14 +122,15 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
 
     last_evt = event;
 
-    switch (event) {    
+    switch (event) {  
+    case AI_AUDIO_INPUT_EVT_NONE:
+        //do nothing
+    break;  
     case AI_AUDIO_INPUT_EVT_WAKEUP:{
-        if(AI_CLOUD_ASR_STATE_IDLE == ai_audio_cloud_asr_get_state()) {
-            ai_audio_cloud_asr_start();
-    
-            if (sg_ai_agent_inform_cb) {
-                sg_ai_agent_inform_cb(AI_AUDIO_EVT_WAKEUP, NULL, 0, NULL);
-            }
+        ai_audio_cloud_asr_start();
+
+        if (sg_ai_agent_inform_cb) {
+            sg_ai_agent_inform_cb(AI_AUDIO_EVT_WAKEUP, NULL, 0, NULL);
         }
     } 
     break;
@@ -246,7 +247,7 @@ OPERATE_RET ai_audio_set_open(bool is_open)
             ai_audio_player_stop();
         }
 
-        ai_audio_cloud_asr_set_idle();
+        ai_audio_cloud_asr_set_idle(true);
     }
 
     return OPRT_OK;

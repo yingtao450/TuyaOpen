@@ -71,7 +71,7 @@ OPERATE_RET ai_audio_cloud_stop_wait_asr(void);
  * @param None
  * @return OPERATE_RET - OPRT_OK if the operation is successful, otherwise an error code.
  */
-OPERATE_RET ai_audio_cloud_asr_set_idle(void);
+OPERATE_RET ai_audio_cloud_asr_set_idle(bool is_forced_intrrupt);
 
 /**
  * @brief Get the current state of the audio could asr process.
