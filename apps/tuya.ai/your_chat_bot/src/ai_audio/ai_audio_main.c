@@ -63,6 +63,7 @@ typedef enum {
 ***********************************************************/
 static AI_AUDIO_INFORM_CB sg_ai_agent_inform_cb = NULL;
 static AI_AUDIO_WORK_MODE_E sg_ai_audio_work_mode = AI_AUDIO_MODE_MANUAL_SINGLE_TALK;
+static bool sg_is_chating = false;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
@@ -95,6 +96,7 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
     break;
     case AI_AGENT_MSG_TP_AUDIO_STOP: {
         ai_audio_player_data_write(msg->data, msg->data_len, 1);
+        sg_is_chating = false;
     } 
     break;
     case AI_AGENT_MSG_TP_TEXT_NLG: {
@@ -127,7 +129,12 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
         //do nothing
     break;  
     case AI_AUDIO_INPUT_EVT_WAKEUP:{
-        ai_audio_cloud_asr_start();
+        if(true == sg_is_chating){
+            ai_audio_cloud_asr_start(true);
+        }else {
+            ai_audio_cloud_asr_start(false);
+        }
+        sg_is_chating = true;
 
         if (sg_ai_agent_inform_cb) {
             sg_ai_agent_inform_cb(AI_AUDIO_EVT_WAKEUP, NULL, 0, NULL);
@@ -248,6 +255,8 @@ OPERATE_RET ai_audio_set_open(bool is_open)
         }
 
         ai_audio_cloud_asr_set_idle(true);
+
+        sg_is_chating = false;
     }
 
     return OPRT_OK;
