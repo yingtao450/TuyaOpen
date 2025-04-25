@@ -95,6 +95,13 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
     } break;
     case AI_AGENT_MSG_TP_AUDIO_STOP: {
         ai_audio_player_data_write(msg->data, msg->data_len, 1);
+
+        if (AI_AUDIO_WORK_ASR_WAKEUP_SINGLE_TALK == sg_ai_audio_work_mode) {
+            ai_audio_input_stop_asr_awake();
+        }else if(AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK == sg_ai_audio_work_mode) {
+            ai_audio_input_restart_asr_awake_timer();
+        }
+
         sg_is_chating = false;
     } break;
     case AI_AGENT_MSG_TP_TEXT_NLG: {
@@ -124,7 +131,7 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
     case AI_AUDIO_INPUT_EVT_NONE:
         // do nothing
         break;
-    case AI_AUDIO_INPUT_EVT_WAKEUP: {
+    case AI_AUDIO_INPUT_EVT_GET_VALID_VOICE_START: {
         if (true == sg_is_chating) {
             ai_audio_cloud_asr_start(true);
         } else {
@@ -132,29 +139,50 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
         }
         sg_is_chating = true;
 
-        if (sg_ai_agent_inform_cb) {
-            sg_ai_agent_inform_cb(AI_AUDIO_EVT_WAKEUP, NULL, 0, NULL);
-        }
     } break;
-    case AI_AUDIO_INPUT_EVT_AWAKE_STOP: {
+    case AI_AUDIO_INPUT_EVT_GET_VALID_VOICE_STOP: {
         ai_audio_cloud_asr_stop();
-    } break;
+    }
+    break;
+    case AI_AUDIO_INPUT_EVT_ASR_WAKEUP_WORD: {
+        if (true == sg_is_chating) {
+            ai_audio_cloud_asr_set_idle(true);
+        }
+
+        ai_audio_player_play_alert_syn(AI_AUDIO_ALERT_WAKEUP);
+
+        if (sg_ai_agent_inform_cb) {
+            sg_ai_agent_inform_cb(AI_AUDIO_EVT_ASR_WAKEUP, NULL, 0, NULL);
+        }
+    }
+    break;
+    case AI_AUDIO_INPUT_EVT_ASR_WAKEUP_STOP: {
+
+        if (sg_ai_agent_inform_cb) {
+            sg_ai_agent_inform_cb(AI_AUDIO_EVT_ASR_WAKEUP_END, NULL, 0, NULL);
+        }
+    }
+    break;
     }
 }
 
-static AI_AUDIO_INPUT_WAKEUP_TP_E __get_input_wakeup_type(AI_AUDIO_WORK_MODE_E work_mode)
+static AI_AUDIO_INPUT_VALID_METHOD_E __get_input_get_valid_data_method(AI_AUDIO_WORK_MODE_E work_mode)
 {
-    AI_AUDIO_INPUT_WAKEUP_TP_E wakeup_tp = 0;
+    AI_AUDIO_INPUT_VALID_METHOD_E method = 0;
 
     if (work_mode == AI_AUDIO_MODE_MANUAL_SINGLE_TALK) {
-        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_MANUAL;
-    } else if (work_mode == AI_AUDIO_WORK_MANUAL_FREE_TALK) {
-        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_VAD;
+        method = AI_AUDIO_INPUT_VALID_METHOD_MANUAL;
+    } else if (work_mode == AI_AUDIO_WORK_VAD_FREE_TALK) {
+        method = AI_AUDIO_INPUT_VALID_METHOD_VAD;
+    } else if(work_mode == AI_AUDIO_WORK_ASR_WAKEUP_SINGLE_TALK){
+        method = AI_AUDIO_INPUT_VALID_METHOD_ASR;
+    }else if(work_mode == AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK){
+        method = AI_AUDIO_INPUT_VALID_METHOD_ASR;
     } else {
-        wakeup_tp = AI_AUDIO_INPUT_WAKEUP_VAD;
+        method = AI_AUDIO_INPUT_VALID_METHOD_VAD;
     }
 
-    return wakeup_tp;
+    return method;
 }
 
 /**
@@ -171,7 +199,7 @@ OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
         return OPRT_INVALID_PARM;
     }
 
-    input_cfg.wakeup_tp = __get_input_wakeup_type(cfg->work_mode);
+    input_cfg.get_valid_data_method = __get_input_get_valid_data_method(cfg->work_mode);
     sg_ai_audio_work_mode = cfg->work_mode;
 
     TUYA_CALL_ERR_RETURN(ai_audio_input_init(&input_cfg, __ai_audio_input_inform_handle));
@@ -244,9 +272,9 @@ uint8_t ai_audio_get_volume(void)
 OPERATE_RET ai_audio_set_open(bool is_open)
 {
     if (true == is_open) {
-        ai_audio_input_enable_wakeup(true);
+        ai_audio_input_enable_get_valid_data(true);
     } else {
-        ai_audio_input_enable_wakeup(false);
+        ai_audio_input_enable_get_valid_data(false);
 
         if (ai_audio_player_is_playing()) {
             PR_DEBUG("player is playing, stop it first");
@@ -267,7 +295,7 @@ OPERATE_RET ai_audio_manual_start_single_talk(void)
         return OPRT_COM_ERROR;
     }
 
-    ai_audio_input_manual_set_wakeup(true);
+    ai_audio_input_manual_open_get_valid_data(true);
 
     return OPRT_OK;
 }
@@ -278,7 +306,7 @@ OPERATE_RET ai_audio_manual_stop_single_talk(void)
         return OPRT_COM_ERROR;
     }
 
-    ai_audio_input_manual_set_wakeup(false);
+    ai_audio_input_manual_open_get_valid_data(false);
 
     return OPRT_OK;
 }
