@@ -64,8 +64,21 @@ typedef struct {
 ***********************const declaration********************
 ***********************************************************/
 const static TKL_ASR_WAKEUP_WORD_E cWAKEUP_KEYWORD_LIST[] = {
+#if defined(ENABLE_WAKEUP_KEYWORD_NIHAO_TUYA) && (ENABLE_WAKEUP_KEYWORD_NIHAO_TUYA == 1)
     TKL_ASR_WAKEUP_NIHAO_TUYA,
+#endif
+
+#if defined(ENABLE_WAKEUP_KEYWORD_NIHAO_XIAOZHI) && (ENABLE_WAKEUP_KEYWORD_NIHAO_XIAOZHI == 1)
     TKL_ASR_WAKEUP_NIHAO_XIAOZHI,
+#endif
+
+#if defined(TKL_ASR_WAKEUP_XIAOZHI_TONGXUE) && (TKL_ASR_WAKEUP_XIAOZHI_TONGXUE == 1)
+    TKL_ASR_WAKEUP_XIAOZHI_TONGXUE,
+#endif
+
+#if defined(TKL_ASR_WAKEUP_XIAOZHI_GUANJIA) && (TKL_ASR_WAKEUP_XIAOZHI_GUANJIA == 1)
+    TKL_ASR_WAKEUP_XIAOZHI_GUANJIA,
+#endif
 };
 
 /***********************************************************
