@@ -537,11 +537,11 @@ OPERATE_RET ai_audio_player_play_alert_syn(AI_AUDIO_ALERT_TYPE_E type)
     ai_audio_player_play_alert(type);
 
     while (!ai_audio_player_is_playing()) {
-        tkl_system_sleep(5);
+        tal_system_sleep(10);
     }
 
     while (ai_audio_player_is_playing()) {
-        tkl_system_sleep(5);
+        tal_system_sleep(10);
     }
 
     return OPRT_OK;

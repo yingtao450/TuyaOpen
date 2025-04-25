@@ -19,11 +19,8 @@ extern "C" {
 ************************macro define************************
 ***********************************************************/
 /* Example configurations */
-#define EXAMPLE_RECV_BUF_SIZE   (2400)
 #define I2S_INPUT_SAMPLE_RATE     (16000)
 #define I2S_OUTPUT_SAMPLE_RATE     (16000)
-#define EXAMPLE_MCLK_MULTIPLE   (384) // If not using 24-bit data width, 256 should be enough
-#define EXAMPLE_MCLK_FREQ_HZ    (EXAMPLE_SAMPLE_RATE * EXAMPLE_MCLK_MULTIPLE)
 
 /* I2C port and GPIOs */
 #define I2C_NUM         (0)

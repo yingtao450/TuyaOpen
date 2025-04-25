@@ -414,7 +414,7 @@ static void __ai_audio_handle_frame_task(void *arg)
     while (1) {
         rb_used_sz = tuya_ring_buff_used_size_get(sg_audio_input.ringbuff_hdl);
         if (0 == rb_used_sz) {
-            tkl_system_sleep(10);
+            tal_system_sleep(10);
             continue;
         }
 

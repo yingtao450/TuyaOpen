@@ -192,13 +192,16 @@ OPERATE_RET codec_8311_init(TUYA_I2S_NUM_E i2s_num, const TDD_AUDIO_8311_CODEC_T
     input_sample_rate_ = i2s_config->mic_sample_rate;
     output_sample_rate_ = i2s_config->spk_sample_rate;
     output_volume_ = i2s_config->defaule_volume;
-    pa_pin_ = i2s_config->gpio_output_pa;
 
     // ESP_LOGI(TAG, ">>>>>>>>mclk=%d, bclk=%d, ws=%d, dout=%d, din=%d",
     //          i2s_config->i2s_mck_io, i2s_config->i2s_bck_io, i2s_config->i2s_ws_io,
     //          i2s_config->i2s_do_io, i2s_config->i2s_di_io);
-    // ESP_LOGI(TAG, ">>>>>>>>i2c_port=%d, es8311_addr=%d, pa_pin_=%d",
-    //          i2c_port, es8311_addr, pa_pin_);
+    // ESP_LOGI(TAG, ">>>>>>>>i2c_port=%d, sda=%d, scl=%d, es8311_addr=%d, pa_pin_=%d",
+    //          i2c_port, i2s_config->i2c_sda_io, i2s_config->i2c_scl_io, es8311_addr, pa_pin_);
+    // ESP_LOGI(TAG, ">>>>>>>>input_sample_rate=%d, output_sample_rate_=%d, volume=%d",
+    //          input_sample_rate_, output_sample_rate_, output_volume_);
+    // ESP_LOGI(TAG, ">>>>>>>>dma_desc_num=%ld, dma_frame_num=%ld",
+    //          i2s_config->dma_desc_num, i2s_config->dma_frame_num);
 
     InitializeCodecI2c(i2s_config);
     i2c_master_handle = (void*)codec_i2c_bus_;
