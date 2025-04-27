@@ -15,6 +15,7 @@ tuyadb/
 __pycache__
 .build
 *.using_config
+.mirror
 
 /arduino-tuyaopen
 /examples
