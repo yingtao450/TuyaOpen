@@ -124,7 +124,7 @@ static void __app_display_status_tm_cb(TIMER_ID timer_id, void *arg)
     case DISPLAY_STATUS_VERSION: {
         snprintf(sw_version, sizeof(sw_version), "%s%s", VERSION, PROJECT_VERSION);
         app_display_send_msg(TY_DISPLAY_TP_STATUS, (uint8_t *)sw_version, strlen(sw_version));
-        if (display_status_cnt * DISPLAY_STATUS_TM >= 3) {
+        if (display_status_cnt * DISPLAY_STATUS_TM >= 3 * 1000) {
             display_status_cnt = 0;
             // After 3 seconds, switch to standby
             system_info.display_status = DISPLAY_STATUS_STANDBY;
@@ -134,7 +134,7 @@ static void __app_display_status_tm_cb(TIMER_ID timer_id, void *arg)
     case DISPLAY_STATUS_STANDBY: {
         app_display_send_msg(TY_DISPLAY_TP_STATUS, (uint8_t *)STANDBY, strlen(STANDBY));
         // After 3 seconds, switch to time
-        if (display_status_cnt * DISPLAY_STATUS_TM >= 3) {
+        if (display_status_cnt * DISPLAY_STATUS_TM >= 3 * 1000) {
             display_status_cnt = 0;
             system_info.display_status = DISPLAY_STATUS_TIME;
         }
