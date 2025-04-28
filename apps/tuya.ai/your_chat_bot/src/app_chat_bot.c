@@ -27,23 +27,23 @@ typedef uint8_t APP_CHAT_MODE_E;
 /*Press and hold button to start a single conversation.*/
 #define APP_CHAT_MODE_KEY_PRESS_HOLD_SINGLE 0
 /*Press the button once to start or stop the free conversation.*/
-#define APP_CHAT_MODE_KEY_TRIG_VAD_FREE     1
-/*Say the wake-up word to start a single conversation, similar to a smart speaker. 
+#define APP_CHAT_MODE_KEY_TRIG_VAD_FREE 1
+/*Say the wake-up word to start a single conversation, similar to a smart speaker.
  *If no conversation is detected within 20 seconds, you need to say the wake-up word again*/
-#define APP_CHAT_MODE_ASR_WAKEUP_SINGLE     2 
+#define APP_CHAT_MODE_ASR_WAKEUP_SINGLE 2
 /*Saying the wake-up word, you can have a free conversation.
  *If no conversation is detected within 20 seconds, you need to say the wake-up word again*/
-#define APP_CHAT_MODE_ASR_WAKEUP_FREE       3
+#define APP_CHAT_MODE_ASR_WAKEUP_FREE 3
 
-#define APP_CHAT_MODE_MAX                   4
+#define APP_CHAT_MODE_MAX 4
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
 typedef struct {
-    APP_CHAT_MODE_E       mode;
-    AI_AUDIO_WORK_MODE_E  auido_mode;
+    APP_CHAT_MODE_E mode;
+    AI_AUDIO_WORK_MODE_E auido_mode;
     AI_AUDIO_ALERT_TYPE_E mode_alert;
-    bool                  is_open;
+    bool is_open;
 } CHAT_WORK_MODE_INFO_T;
 
 typedef struct {
@@ -75,14 +75,14 @@ const CHAT_WORK_MODE_INFO_T cAPP_WORK_TRIG_VAD = {
     .is_open = false,
 };
 
-const CHAT_WORK_MODE_INFO_T cAPP_WORK_WAKEUP_SINGLE ={
+const CHAT_WORK_MODE_INFO_T cAPP_WORK_WAKEUP_SINGLE = {
     .mode = APP_CHAT_MODE_ASR_WAKEUP_SINGLE,
     .auido_mode = AI_AUDIO_WORK_ASR_WAKEUP_SINGLE_TALK,
     .mode_alert = AI_AUDIO_ALERT_WAKEUP_TALK,
     .is_open = true,
 };
 
-const CHAT_WORK_MODE_INFO_T cAPP_WORK_WAKEUP_FREE ={
+const CHAT_WORK_MODE_INFO_T cAPP_WORK_WAKEUP_FREE = {
     .mode = APP_CHAT_MODE_ASR_WAKEUP_FREE,
     .auido_mode = AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK,
     .mode_alert = AI_AUDIO_ALERT_FREE_TALK,
@@ -186,9 +186,9 @@ static void __app_ai_audio_inform_cb(AI_AUDIO_EVENT_E event, uint8_t *data, uint
     case AI_AUDIO_EVT_ASR_WAKEUP: {
         __app_led_set_state(1);
     } break;
-    case AI_AUDIO_EVT_ASR_WAKEUP_END:{
+    case AI_AUDIO_EVT_ASR_WAKEUP_END: {
         __app_led_set_state(0);
-    }break;
+    } break;
     default:
         break;
     }
@@ -249,11 +249,14 @@ static void __app_button_function_cb(char *name, TDL_BUTTON_TOUCH_EVENT_E event,
             if (sg_chat_bot.is_enable) {
                 __app_chat_bot_enable(false);
                 __app_led_set_state(0);
-                app_display_set_status("STANDBY");
+                app_display_show_notification(STANDBY);
+                if (sg_ui_status_tm) {
+                    tal_sw_timer_start(sg_ui_status_tm, 3 * 1000, TAL_TIMER_CYCLE);
+                }
             } else {
                 __app_chat_bot_enable(true);
                 __app_led_set_state(1);
-                app_display_set_status("LISTEN");
+                app_display_set_status(LISTENING);
             }
             PR_DEBUG("button single click, chat bot %s", sg_chat_bot.is_enable ? "enable" : "disable");
         }
@@ -309,9 +312,22 @@ static void _ui_status_tm_cb(TIMER_ID timer_id, void *arg)
     char tm_str[10] = {0};
 
     snprintf(tm_str, sizeof(tm_str), "%02d:%02d", tm.tm_hour, tm.tm_min);
-    app_display_set_status(tm_str);
+    if (0 == sg_chat_bot.is_enable) {
+        // show standby
+        app_display_set_status(tm_str);
+    }
 
     // wifi status
+    static uint32_t wifi_status_cnt = 0;
+
+    if (0 == (wifi_status_cnt * 3) % (10 * 60)) {
+        wifi_status_cnt = 0;
+        wifi_status_cnt++;
+    } else {
+        wifi_status_cnt++;
+        return;
+    }
+
     DIS_WIFI_STATUS_E wifi_status = DIS_WIFI_STATUS_DISCONNECTED;
     netmgr_status_e net_status = NETMGR_LINK_DOWN;
     netmgr_conn_get(NETCONN_AUTO, NETCONN_CMD_STATUS, &net_status);
@@ -319,10 +335,7 @@ static void _ui_status_tm_cb(TIMER_ID timer_id, void *arg)
     if (net_status == NETMGR_LINK_UP) {
         // get rssi
         int8_t rssi = 0;
-#if !defined(PLATFORM_T5)
-        // FIX: Frequent calls on t5 may cause a reboot
         tkl_wifi_station_get_conn_ap_rssi(&rssi);
-#endif
         if (rssi >= -60) {
             wifi_status = DIS_WIFI_STATUS_GOOD;
         } else if (rssi >= -70) {
@@ -333,13 +346,13 @@ static void _ui_status_tm_cb(TIMER_ID timer_id, void *arg)
     } else {
         wifi_status = DIS_WIFI_STATUS_DISCONNECTED;
     }
-    app_display_set_wifi_status(wifi_status);
+    app_display_set_network_status(wifi_status);
 }
 
 static OPERATE_RET __app_chat_bot_ui_status_init(void *data)
 {
     tal_sw_timer_create(_ui_status_tm_cb, NULL, &sg_ui_status_tm);
-    tal_sw_timer_start(sg_ui_status_tm, 5 * 1000, TAL_TIMER_CYCLE);
+    tal_sw_timer_start(sg_ui_status_tm, 3 * 1000, TAL_TIMER_CYCLE);
 
     return OPRT_OK;
 }
