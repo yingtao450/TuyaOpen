@@ -120,7 +120,6 @@ static APP_CHAT_BOT_S sg_chat_bot = {
 };
 
 static TDL_BUTTON_HANDLE sg_button_hdl = NULL;
-static TIMER_ID sg_ui_status_tm = NULL;
 
 /***********************************************************
 ***********************function define**********************
@@ -161,12 +160,16 @@ static void __app_ai_audio_inform_cb(AI_AUDIO_EVENT_E event, uint8_t *data, uint
     switch (event) {
     case AI_AUDIO_EVT_HUMAN_ASR_TEXT: {
         if (len > 0 && data) {
-            // send asr text to display
-            app_display_set_chat_massage(CHAT_ROLE_USER, (char *)data);
+// send asr text to display
+#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
+            app_display_send_msg(TY_DISPLAY_TP_USER_MSG, data, len);
+#endif
         }
     } break;
     case AI_AUDIO_EVT_AI_REPLIES_TEXT: {
-        app_display_set_chat_massage(CHAT_ROLE_ASSISTANT, (char *)data);
+#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
+        app_display_send_msg(TY_DISPLAY_TP_ASSISTANT_MSG, data, len);
+#endif
     } break;
     case AI_AUDIO_EVT_AI_REPLIES_EMO: {
         AI_AUDIO_EMOTION_T *emo;
@@ -175,7 +178,9 @@ static void __app_ai_audio_inform_cb(AI_AUDIO_EVENT_E event, uint8_t *data, uint
         if (emo) {
             if (emo->name) {
                 PR_DEBUG("emotion name:%s", emo->name);
-                app_display_set_emotion(emo->name);
+#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
+                app_display_send_msg(TY_DISPLAY_TP_EMOTION, emo->name, strlen(emo->name));
+#endif
             }
 
             if (emo->text) {
@@ -210,6 +215,11 @@ static OPERATE_RET __app_chat_bot_enable(uint8_t enable)
     sg_chat_bot.is_enable = enable;
 
     return OPRT_OK;
+}
+
+uint8_t app_chat_bot_get_enable(void)
+{
+    return sg_chat_bot.is_enable;
 }
 
 static void __app_button_function_cb(char *name, TDL_BUTTON_TOUCH_EVENT_E event, void *argc)
@@ -249,14 +259,9 @@ static void __app_button_function_cb(char *name, TDL_BUTTON_TOUCH_EVENT_E event,
             if (sg_chat_bot.is_enable) {
                 __app_chat_bot_enable(false);
                 __app_led_set_state(0);
-                app_display_show_notification(STANDBY);
-                if (sg_ui_status_tm) {
-                    tal_sw_timer_start(sg_ui_status_tm, 3 * 1000, TAL_TIMER_CYCLE);
-                }
             } else {
                 __app_chat_bot_enable(true);
                 __app_led_set_state(1);
-                app_display_set_status(LISTENING);
             }
             PR_DEBUG("button single click, chat bot %s", sg_chat_bot.is_enable ? "enable" : "disable");
         }
@@ -305,67 +310,12 @@ static void __app_chat_bot_config_dump(void)
     PR_DEBUG("led: pin=%d, active_level=%d", CHAT_INDICATE_LED_PIN, TUYA_GPIO_LEVEL_HIGH);
 }
 
-static void _ui_status_tm_cb(TIMER_ID timer_id, void *arg)
-{
-    POSIX_TM_S tm = {0};
-    tal_time_get_local_time_custom(0, &tm);
-    char tm_str[10] = {0};
-
-    snprintf(tm_str, sizeof(tm_str), "%02d:%02d", tm.tm_hour, tm.tm_min);
-    if (0 == sg_chat_bot.is_enable) {
-        // show standby
-        app_display_set_status(tm_str);
-    }
-
-    // wifi status
-    static uint32_t wifi_status_cnt = 0;
-
-    if (0 == (wifi_status_cnt * 3) % (10 * 60)) {
-        wifi_status_cnt = 0;
-        wifi_status_cnt++;
-    } else {
-        wifi_status_cnt++;
-        return;
-    }
-
-    DIS_WIFI_STATUS_E wifi_status = DIS_WIFI_STATUS_DISCONNECTED;
-    netmgr_status_e net_status = NETMGR_LINK_DOWN;
-    netmgr_conn_get(NETCONN_AUTO, NETCONN_CMD_STATUS, &net_status);
-
-    if (net_status == NETMGR_LINK_UP) {
-        // get rssi
-        int8_t rssi = 0;
-        tkl_wifi_station_get_conn_ap_rssi(&rssi);
-        if (rssi >= -60) {
-            wifi_status = DIS_WIFI_STATUS_GOOD;
-        } else if (rssi >= -70) {
-            wifi_status = DIS_WIFI_STATUS_FAIR;
-        } else {
-            wifi_status = DIS_WIFI_STATUS_WEAK;
-        }
-    } else {
-        wifi_status = DIS_WIFI_STATUS_DISCONNECTED;
-    }
-    app_display_set_network_status(wifi_status);
-}
-
-static OPERATE_RET __app_chat_bot_ui_status_init(void *data)
-{
-    tal_sw_timer_create(_ui_status_tm_cb, NULL, &sg_ui_status_tm);
-    tal_sw_timer_start(sg_ui_status_tm, 3 * 1000, TAL_TIMER_CYCLE);
-
-    return OPRT_OK;
-}
-
 OPERATE_RET app_chat_bot_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_AUDIO_CONFIG_T ai_audio_cfg;
 
     __app_chat_bot_config_dump();
-
-    tal_event_subscribe(EVENT_MQTT_CONNECTED, "chat_bot_ui_status", __app_chat_bot_ui_status_init,
-                        SUBSCRIBE_TYPE_ONETIME);
 
     ai_audio_cfg.work_mode = sg_chat_bot.work->auido_mode;
     ai_audio_cfg.inform_cb = __app_ai_audio_inform_cb;
@@ -378,8 +328,6 @@ OPERATE_RET app_chat_bot_init(void)
 #if !defined(PLATFORM_ESP32)
     TUYA_CALL_ERR_RETURN(__app_led_init(CHAT_INDICATE_LED_PIN, TUYA_GPIO_LEVEL_HIGH));
 #endif
-
-    app_display_set_status("STANDBY");
 
     __app_chat_bot_enable(sg_chat_bot.work->is_open);
 

@@ -150,6 +150,32 @@ static void __chat_bot_ui_task(void *args)
 }
 
 /**
+ * @brief Initialize the display system
+ *
+ * @param None
+ * @return OPERATE_RET Initialization result, OPRT_OK indicates success
+ */
+OPERATE_RET app_display_init(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    TUYA_CALL_ERR_RETURN(tuya_lvgl_init());
+
+    TUYA_CALL_ERR_RETURN(tkl_queue_create_init(&sg_app_display.queue_hdl, sizeof(DISP_CHAT_MSG_T), 8));
+
+    THREAD_CFG_T cfg = {
+        .thrdname = "chat_ui",
+        .priority = THREAD_PRIO_1,
+        .stackDepth = 1024 * 4,
+    };
+
+    TUYA_CALL_ERR_RETURN(
+        tal_thread_create_and_start(&sg_app_display.thrd_hdl, NULL, NULL, __chat_bot_ui_task, NULL, &cfg));
+
+    return OPRT_OK;
+}
+
+/**
  * @brief Send display message to the display system
  *
  * @param tp Type of the display message
@@ -157,7 +183,7 @@ static void __chat_bot_ui_task(void *args)
  * @param len Length of the message data
  * @return OPERATE_RET Result of sending the message, OPRT_OK indicates success
  */
-static OPERATE_RET __app_display_send_msg(UI_DISPLAY_TYPE_E tp, const char *data, int len)
+OPERATE_RET app_display_send_msg(UI_DISPLAY_TYPE_E tp, const uint8_t *data, int len)
 {
     DISP_CHAT_MSG_T chat_msg;
 
@@ -177,85 +203,4 @@ static OPERATE_RET __app_display_send_msg(UI_DISPLAY_TYPE_E tp, const char *data
     tkl_queue_post(sg_app_display.queue_hdl, &chat_msg, 0xFFFFFFFF);
 
     return OPRT_OK;
-}
-
-/**
- * @brief Initialize the display system
- *
- * @param None
- * @return OPERATE_RET Initialization result, OPRT_OK indicates success
- */
-OPERATE_RET app_display_init(void)
-{
-    OPERATE_RET rt = OPRT_OK;
-
-    TUYA_CALL_ERR_RETURN(tuya_lvgl_init());
-
-    TUYA_CALL_ERR_RETURN(tkl_queue_create_init(&sg_app_display.queue_hdl, sizeof(DISP_CHAT_MSG_T), 8));
-
-    THREAD_CFG_T cfg = {
-        .thrdname = "chat_ui",
-        .priority = THREAD_PRIO_2,
-        .stackDepth = 1024 * 4,
-    };
-
-    TUYA_CALL_ERR_RETURN(
-        tal_thread_create_and_start(&sg_app_display.thrd_hdl, NULL, NULL, __chat_bot_ui_task, NULL, &cfg));
-
-    return OPRT_OK;
-}
-
-void app_display_set_status(const char *status)
-{
-    if (status == NULL) {
-        return;
-    }
-
-    __app_display_send_msg(UI_DISPLAY_TYPE_STATUS, (char *)status, strlen(status));
-}
-
-void app_display_show_notification(const char *notification)
-{
-    if (notification == NULL) {
-        return;
-    }
-
-    __app_display_send_msg(UI_DISPLAY_TYPE_NOTIFICATION, (char *)notification, strlen(notification));
-}
-
-void app_display_set_emotion(const char *emotion)
-{
-    if (emotion == NULL) {
-        return;
-    }
-
-    __app_display_send_msg(UI_DISPLAY_TYPE_EMOTION, (char *)emotion, strlen(emotion));
-}
-
-void app_display_set_chat_massage(CHAT_ROLE_E role, const char *content)
-{
-    if (content == NULL) {
-        return;
-    }
-
-    switch (role) {
-    case CHAT_ROLE_USER: {
-        __app_display_send_msg(UI_DISPLAY_TYPE_USER_MSG, (char *)content, strlen(content));
-    } break;
-    case CHAT_ROLE_ASSISTANT: {
-        __app_display_send_msg(UI_DISPLAY_TYPE_ASSISTANT_MSG, (char *)content, strlen(content));
-    } break;
-    case CHAT_ROLE_SYSTEM: {
-        __app_display_send_msg(UI_DISPLAY_TYPE_SYSTEM_MSG, (char *)content, strlen(content));
-    } break;
-
-    default:
-        PR_ERR("Invalid role: %d", role);
-        break;
-    }
-}
-
-void app_display_set_network_status(DIS_WIFI_STATUS_E status)
-{
-    __app_display_send_msg(UI_DISPLAY_TYPE_NETWORK, &status, sizeof(DIS_WIFI_STATUS_E));
 }

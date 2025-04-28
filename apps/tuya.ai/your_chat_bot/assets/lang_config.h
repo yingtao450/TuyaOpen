@@ -17,6 +17,7 @@ extern "C" {
 #define VERSION                   "版本 "
 #define INITIALIZING              "正在初始化..."
 #define REGISTERING_NETWORK       "等待网络..."
+#define CONNECT_SERVER            "连接服务器..."
 #define STANDBY                   "待命"
 #define CONNECT_TO                "连接 "
 #define CONNECTING                "连接中..."

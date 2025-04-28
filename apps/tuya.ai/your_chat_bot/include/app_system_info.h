@@ -1,12 +1,12 @@
 /**
- * @file app_chat_bot.h
- * @brief app_chat_bot module is used to
+ * @file app_system_info.h
+ * @brief app_system_info module is used to
  * @version 0.1
- * @date 2025-03-25
+ * @date 2025-04-28
  */
 
-#ifndef __APP_CHAT_BOT_H__
-#define __APP_CHAT_BOT_H__
+#ifndef __APP_SYSTEM_INFO_H__
+#define __APP_SYSTEM_INFO_H__
 
 #include "tuya_cloud_types.h"
 
@@ -26,12 +26,12 @@ extern "C" {
 ********************function declaration********************
 ***********************************************************/
 
-OPERATE_RET app_chat_bot_init(void);
+void app_system_info(void);
 
-uint8_t app_chat_bot_get_enable(void);
+void app_system_info_loop_start(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __APP_CHAT_BOT_H__ */
+#endif /* __APP_SYSTEM_INFO_H__ */

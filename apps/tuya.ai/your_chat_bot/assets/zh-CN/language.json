@@ -6,6 +6,7 @@
         "VERSION": "版本 ",
         "INITIALIZING":"正在初始化...",
         "REGISTERING_NETWORK":"等待网络...",
+        "CONNECT_SERVER":"连接服务器...",
 
         "STANDBY":"待命",
         "CONNECT_TO":"连接 ",
