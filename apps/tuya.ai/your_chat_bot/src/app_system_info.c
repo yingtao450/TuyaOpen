@@ -75,7 +75,10 @@ static void __app_display_net_status_update(void)
     if (net_status == NETMGR_LINK_UP) {
         // get rssi
         int8_t rssi = 0;
+#ifndef PLATFORM_T5
+        // BUG: Getting RSSI causes a crash on T5 platform
         tkl_wifi_station_get_conn_ap_rssi(&rssi);
+#endif
         if (rssi >= -60) {
             wifi_status = UI_WIFI_STATUS_GOOD;
         } else if (rssi >= -70) {
