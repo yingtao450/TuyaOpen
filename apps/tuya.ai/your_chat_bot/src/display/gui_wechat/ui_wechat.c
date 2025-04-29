@@ -26,6 +26,8 @@
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
+#define MAX_MASSAGE_NUM 20
+
 LV_FONT_DECLARE(font_puhui_18_2);
 LV_FONT_DECLARE(font_awesome_16_4);
 
@@ -205,7 +207,6 @@ void ui_frame_init(void)
     lv_obj_set_flex_flow(sg_ui.ui.content, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_pad_ver(sg_ui.ui.content, 8, 0);
     lv_obj_set_style_pad_hor(sg_ui.ui.content, 10, 0);
-    // lv_obj_set_y(sg_ui.ui.content, 40);
     lv_obj_align(sg_ui.ui.content, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_move_background(sg_ui.ui.content);
 
@@ -220,6 +221,15 @@ void ui_set_user_msg(const char *text)
 {
     if (sg_ui.ui.content == NULL) {
         return;
+    }
+
+    // Check if the number of messages exceeds the limit
+    uint32_t child_count = lv_obj_get_child_cnt(sg_ui.ui.content);
+    if (child_count >= MAX_MASSAGE_NUM) {
+        lv_obj_t *first_child = lv_obj_get_child(sg_ui.ui.content, 0);
+        if (first_child) {
+            lv_obj_del(first_child);
+        }
     }
 
     lv_obj_t *msg_cont = lv_obj_create(sg_ui.ui.content);
@@ -263,6 +273,15 @@ void ui_set_assistant_msg(const char *text)
 {
     if (sg_ui.ui.content == NULL) {
         return;
+    }
+
+    // Check if the number of messages exceeds the limit
+    uint32_t child_count = lv_obj_get_child_cnt(sg_ui.ui.content);
+    if (child_count >= MAX_MASSAGE_NUM) {
+        lv_obj_t *first_child = lv_obj_get_child(sg_ui.ui.content, 0);
+        if (first_child) {
+            lv_obj_del(first_child);
+        }
     }
 
     lv_obj_t *msg_cont = lv_obj_create(sg_ui.ui.content);
