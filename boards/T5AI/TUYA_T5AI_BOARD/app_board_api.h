@@ -46,6 +46,12 @@ typedef enum {
 ********************function declaration********************
 ***********************************************************/
 
+/**
+ * @brief Initialize the audio driver
+ *
+ * @param name Name of the audio driver
+ * @return OPERATE_RET Initialization result, OPRT_OK indicates success
+ */
 OPERATE_RET app_audio_driver_init(const char *name);
 
 /**
