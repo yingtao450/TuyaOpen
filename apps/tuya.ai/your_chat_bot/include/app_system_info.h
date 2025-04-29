@@ -1,16 +1,14 @@
 /**
- * @file oled_display.h
- * @brief oled_display module is used to
+ * @file app_system_info.h
+ * @brief app_system_info module is used to
  * @version 0.1
- * @date 2025-04-23
+ * @date 2025-04-28
  */
 
-#ifndef __OLED_DISPLAY_H__
-#define __OLED_DISPLAY_H__
+#ifndef __APP_SYSTEM_INFO_H__
+#define __APP_SYSTEM_INFO_H__
 
 #include "tuya_cloud_types.h"
-
-#include "display_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,24 +26,12 @@ extern "C" {
 ********************function declaration********************
 ***********************************************************/
 
-int oled_ssd1306_init(int scl, int sda, int width, int height);
+void app_system_info(void);
 
-void oled_setup_ui_128x32(void);
-
-void oled_setup_ui_128x64(void);
-
-void oled_set_status(const char *status);
-
-void oled_show_notification(const char *notification);
-
-void oled_set_emotion(const char *emotion);
-
-void oled_set_chat_message(CHAT_ROLE_E role, const char *content);
-
-void oled_set_wifi_status(UI_WIFI_STATUS_E status);
+void app_system_info_loop_start(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __OLED_DISPLAY_H__ */
+#endif /* __APP_SYSTEM_INFO_H__ */
