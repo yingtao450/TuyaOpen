@@ -162,7 +162,6 @@ void ui_frame_init(void)
     // Container
     sg_ui.ui.container = lv_obj_create(screen);
     lv_obj_set_size(sg_ui.ui.container, LV_HOR_RES, LV_VER_RES);
-    // lv_obj_set_flex_flow(sg_ui.ui.container, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_pad_all(sg_ui.ui.container, 0, 0);
     lv_obj_set_style_border_width(sg_ui.ui.container, 0, 0);
     lv_obj_set_style_pad_row(sg_ui.ui.container, 0, 0);
@@ -170,8 +169,6 @@ void ui_frame_init(void)
     // Status bar
     sg_ui.ui.status_bar = lv_obj_create(sg_ui.ui.container);
     lv_obj_set_size(sg_ui.ui.status_bar, LV_HOR_RES, 40);
-    // lv_obj_align(sg_ui.ui.status_bar, LV_ALIGN_TOP_MID, 0, 0);
-    // lv_obj_align(sg_ui.ui.status_bar, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_bg_color(sg_ui.ui.status_bar, lv_palette_main(LV_PALETTE_GREEN), 0);
 
     // Status label
@@ -236,13 +233,14 @@ void ui_set_user_msg(const char *text)
     lv_obj_remove_style_all(msg_cont);
     lv_obj_set_size(msg_cont, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_style_pad_ver(msg_cont, 6, 0);
-    lv_obj_set_flex_flow(msg_cont, LV_FLEX_FLOW_ROW_REVERSE);
     lv_obj_set_style_pad_column(msg_cont, 10, 0);
 
     lv_obj_t *avatar = lv_obj_create(msg_cont);
     lv_obj_set_style_text_font(avatar, sg_ui.font.icon, 0);
     lv_obj_add_style(avatar, &sg_ui.ui.style_avatar, 0);
     lv_obj_set_size(avatar, 40, 40);
+    lv_obj_align(avatar, LV_ALIGN_TOP_RIGHT, 0, 0);
+
     lv_obj_t *icon = lv_label_create(avatar);
     lv_label_set_text(icon, FONT_AWESOME_USER);
     lv_obj_center(icon);
@@ -251,6 +249,7 @@ void ui_set_user_msg(const char *text)
     lv_obj_set_width(bubble, LV_PCT(75));
     lv_obj_set_height(bubble, LV_SIZE_CONTENT);
     lv_obj_add_style(bubble, &sg_ui.ui.style_user_bubble, 0);
+    lv_obj_align_to(bubble, avatar, LV_ALIGN_OUT_LEFT_TOP, -10, 0);
 
     lv_obj_set_scrollbar_mode(bubble, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_dir(bubble, LV_DIR_NONE);
@@ -265,7 +264,7 @@ void ui_set_user_msg(const char *text)
     lv_obj_set_width(label, LV_PCT(100));
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
 
-    lv_obj_scroll_to_view(msg_cont, LV_ANIM_ON);
+    lv_obj_scroll_to_view_recursive(msg_cont, LV_ANIM_ON);
     lv_obj_update_layout(sg_ui.ui.content);
 }
 
@@ -288,13 +287,14 @@ void ui_set_assistant_msg(const char *text)
     lv_obj_remove_style_all(msg_cont);
     lv_obj_set_size(msg_cont, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_style_pad_ver(msg_cont, 6, 0);
-    lv_obj_set_flex_flow(msg_cont, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_pad_column(msg_cont, 10, 0);
 
     lv_obj_t *avatar = lv_obj_create(msg_cont);
     lv_obj_set_style_text_font(avatar, sg_ui.font.icon, 0);
     lv_obj_add_style(avatar, &sg_ui.ui.style_avatar, 0);
     lv_obj_set_size(avatar, 40, 40);
+    lv_obj_align(avatar, LV_ALIGN_TOP_LEFT, 0, 0);
+
     lv_obj_t *icon = lv_label_create(avatar);
     lv_label_set_text(icon, FONT_AWESOME_USER_ROBOT);
     lv_obj_center(icon);
@@ -303,6 +303,7 @@ void ui_set_assistant_msg(const char *text)
     lv_obj_set_width(bubble, LV_PCT(75));
     lv_obj_set_height(bubble, LV_SIZE_CONTENT);
     lv_obj_add_style(bubble, &sg_ui.ui.style_ai_bubble, 0);
+    lv_obj_align_to(bubble, avatar, LV_ALIGN_OUT_RIGHT_TOP, 10, 0);
 
     lv_obj_set_scrollbar_mode(bubble, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_dir(bubble, LV_DIR_NONE);
@@ -317,7 +318,7 @@ void ui_set_assistant_msg(const char *text)
     lv_obj_set_width(label, LV_PCT(100));
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
 
-    lv_obj_scroll_to_view(msg_cont, LV_ANIM_ON);
+    lv_obj_scroll_to_view_recursive(msg_cont, LV_ANIM_ON);
     lv_obj_update_layout(sg_ui.ui.content);
 }
 
@@ -362,7 +363,6 @@ void ui_set_notification(const char *notification)
     }
 
     lv_label_set_text(sg_ui.ui.notification_label, notification);
-    // lv_obj_set_style_text_color(sg_ui.ui.notification_label, sg_ui.theme.text, 0);
     lv_obj_add_flag(sg_ui.ui.status_label, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(sg_ui.ui.notification_label, LV_OBJ_FLAG_HIDDEN);
     tal_sw_timer_start(sg_ui.notification_tm_id, 3 * 1000, TAL_TIMER_ONCE);
