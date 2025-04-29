@@ -149,7 +149,6 @@ static void __ui_font_init(APP_UI_FONT_T *font)
 
     if (NULL == font->emoji) {
         PR_ERR("font_emoji_64_init failed");
-        tal_system_sleep(5 * 1000);
     }
 }
 

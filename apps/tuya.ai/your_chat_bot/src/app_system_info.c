@@ -7,6 +7,7 @@
 
 #include "app_system_info.h"
 #include "ai_audio_player.h"
+#include "lang_config.h"
 
 #include "app_chat_bot.h"
 
@@ -15,6 +16,8 @@
 #include "tal_api.h"
 #include "tuya_iot.h"
 #include "netmgr.h"
+
+#include "tkl_wifi.h"
 
 /***********************************************************
 ************************macro define************************
@@ -74,14 +77,14 @@ static void __app_display_net_status_update(void)
         int8_t rssi = 0;
         tkl_wifi_station_get_conn_ap_rssi(&rssi);
         if (rssi >= -60) {
-            wifi_status = DIS_WIFI_STATUS_GOOD;
+            wifi_status = UI_WIFI_STATUS_GOOD;
         } else if (rssi >= -70) {
-            wifi_status = DIS_WIFI_STATUS_FAIR;
+            wifi_status = UI_WIFI_STATUS_FAIR;
         } else {
-            wifi_status = DIS_WIFI_STATUS_WEAK;
+            wifi_status = UI_WIFI_STATUS_WEAK;
         }
     } else {
-        wifi_status = DIS_WIFI_STATUS_DISCONNECTED;
+        wifi_status = UI_WIFI_STATUS_DISCONNECTED;
     }
 
     if (wifi_status != system_info.last_net_status) {

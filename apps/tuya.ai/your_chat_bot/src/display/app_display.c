@@ -81,7 +81,7 @@ static void __app_display_homepage(void)
 
     tuya_lvgl_mutex_unlock();
 
-    tal_system_sleep(2000);
+    tal_system_sleep(1000);
 }
 
 static void __app_display_msg_handle(DISP_CHAT_MSG_T *msg_data)

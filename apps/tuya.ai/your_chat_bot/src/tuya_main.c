@@ -43,6 +43,8 @@
 #include "app_chat_bot.h"
 #include "ai_audio.h"
 #include "reset_netcfg.h"
+#include "app_system_info.h"
+#include "lang_config.h"
 
 /* Tuya device handle */
 tuya_iot_client_t ai_client;
