@@ -19,4 +19,5 @@ __pycache__
 /arduino-tuyaopen
 /examples
 /tools/tyutool/*tyutool_*
+/tools/tyutool/cache/
 /.set_example
