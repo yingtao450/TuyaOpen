@@ -42,6 +42,10 @@ int app_audio_driver_init(const char *name)
 {
 #if USE_8311
     TDD_AUDIO_8311_CODEC_T cfg = {0};
+#else
+    TDD_AUDIO_ATK_NO_CODEC_T cfg = {0};
+#endif
+
     cfg.i2c_id = I2C_NUM;
     cfg.i2c_scl_io = I2C_SCL_IO;
     cfg.i2c_sda_io = I2C_SDA_IO;
@@ -59,23 +63,9 @@ int app_audio_driver_init(const char *name)
     cfg.dma_frame_num = AUDIO_CODEC_DMA_FRAME_NUM;
     cfg.defaule_volume = 80;
 
+#if USE_8311
     return tdd_audio_8311_codec_register(name, cfg);
-
 #else
-
-    TDD_AUDIO_ATK_NO_CODEC_T cfg = {0};
-    cfg.mic_sample_rate = I2S_INPUT_SAMPLE_RATE;
-    cfg.spk_sample_rate = I2S_OUTPUT_SAMPLE_RATE;
-    cfg.i2s_id = I2S_NUM;
-    cfg.i2s_mck_io = I2S_MCK_IO;
-    cfg.i2s_bck_io = I2S_BCK_IO;
-    cfg.i2s_ws_io = I2S_WS_IO;
-    cfg.i2s_do_io = I2S_DO_IO;
-    cfg.i2s_di_io = I2S_DI_IO;
-    cfg.dma_desc_num = AUDIO_CODEC_DMA_DESC_NUM;
-    cfg.dma_frame_num = AUDIO_CODEC_DMA_FRAME_NUM;
-    cfg.defaule_volume = 80;
-
     return tdd_audio_atk_no_codec_register(name, cfg);
 #endif
 }
