@@ -18,7 +18,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: ${{ github.action_path }}/entrypoint.sh
+    - run: ${{ github.action_path }}/tools/gitee_sync.sh
       shell: bash
       env:
         INPUT_TARGET_URL: ${{ inputs.target-url }}
