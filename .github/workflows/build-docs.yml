@@ -1,0 +1,38 @@
+name: Build and Deploy Docs
+on: 
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r docs/requirements.txt
+          sudo apt-get install rsync
+
+      - name: Build Chinese Docs
+        working-directory: ./docs
+        run: |
+          sphinx-build -b html -c ./zh ./zh build/html/zh_CN
+
+      - name: Build English Docs  
+        working-directory: ./docs
+        run: |
+          sphinx-build -b html -c ./en ./en build/html/en
+
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docs/_build/html/*"
+          target: "/var/www/docs"
