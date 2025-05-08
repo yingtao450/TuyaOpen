@@ -30,6 +30,7 @@ def setup(app):
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
 
 html_theme_options = {
     'display_version': True,
@@ -50,4 +51,14 @@ html_js_files = [
     'js/include_html.js'  # 如果需要引入其他 JavaScript 文件
 ]
 
-html_static_path = ['_static']
+# -- GitHub 相关配置 ---------------------------------------------------
+html_context = {
+    # GitHub 仓库设置（必需）
+    "display_github": True,  # 启用 GitHub 链接
+    "github_user": "tuya",   # 组织/用户名
+    "github_repo": "TuyaOpen",  # 仓库名
+    "github_version": "master",  # 默认分支（如 main/master）
+    
+    # 页面路径配置（自动生成编辑链接）
+    "conf_py_path": "/docs/zh/",  # 配置文件的仓库相对路径
+}
