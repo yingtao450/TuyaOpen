@@ -15,6 +15,9 @@ release = '1.2.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.todo',
     'myst_parser',
     'sphinx_markdown_tables',
     'sphinx_copybutton',
@@ -25,8 +28,12 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = []
+source_suffix = ['.rst', '.md']
 
 language = 'en'
+
+# 语法高亮设置
+pygments_style = 'friendly'
 
 html_logo = '../images/TuyaOpen.png'
 

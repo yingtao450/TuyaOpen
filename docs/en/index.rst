@@ -71,13 +71,13 @@ gitee Mirrors
    :maxdepth: 1
    :glob:
 
-   quick_start.md
-   tos_guide.md
+   quick_start.rst
+   tos_guide.rst
    examples/examples.rst
    applications/application.rst
    peripherals/peripherals.rst
-   new_platform.md
-   new_board.md
-   contribute_guide.md
-   code_style_guide.md
+   new_platform.rst
+   new_board.rst
+   contribute_guide.rst
+   code_style_guide.rst
    faq/faq.rst
