@@ -27,23 +27,8 @@
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
-typedef enum {
-    UI_DISPLAY_TYPE_USER_MSG = 0,
-    UI_DISPLAY_TYPE_ASSISTANT_MSG,
-    UI_DISPLAY_TYPE_SYSTEM_MSG,
-
-    UI_DISPLAY_TYPE_EMOTION,
-
-    // status bar
-    UI_DISPLAY_TYPE_STATUS,
-    UI_DISPLAY_TYPE_NOTIFICATION,
-    UI_DISPLAY_TYPE_NETWORK,
-
-    UI_DISPLAY_TYPE_MAX
-} UI_DISPLAY_TYPE_E;
-
 typedef struct {
-    UI_DISPLAY_TYPE_E type;
+    TY_DISPLAY_TYPE_E type;
     int len;
     char *data;
 } DISP_CHAT_MSG_T;
@@ -93,25 +78,36 @@ static void __app_display_msg_handle(DISP_CHAT_MSG_T *msg_data)
     tuya_lvgl_mutex_lock();
 
     switch (msg_data->type) {
-    case UI_DISPLAY_TYPE_USER_MSG: {
+    case TY_DISPLAY_TP_USER_MSG: {
         ui_set_user_msg(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_ASSISTANT_MSG: {
+    case TY_DISPLAY_TP_ASSISTANT_MSG: {
         ui_set_assistant_msg(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_SYSTEM_MSG: {
+#if defined(ENABLE_GUI_STREAM_AI_TEXT) && (ENABLE_GUI_STREAM_AI_TEXT == 1)
+    case TY_DISPLAY_TP_ASSISTANT_MSG_STREAM_START: {
+        ui_set_assistant_msg_stream_start();
+    } break;
+    case TY_DISPLAY_TP_ASSISTANT_MSG_STREAM_DATA: {
+        ui_set_assistant_msg_stream_data(msg_data->data);
+    } break;
+    case TY_DISPLAY_TP_ASSISTANT_MSG_STREAM_END: {
+        ui_set_assistant_msg_stream_end();
+    } break;
+#endif
+    case TY_DISPLAY_TP_SYSTEM_MSG: {
         ui_set_system_msg(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_EMOTION: {
+    case TY_DISPLAY_TP_EMOTION: {
         ui_set_emotion(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_STATUS: {
+    case TY_DISPLAY_TP_STATUS: {
         ui_set_status(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_NOTIFICATION: {
+    case TY_DISPLAY_TP_NOTIFICATION: {
         ui_set_notification(msg_data->data);
     } break;
-    case UI_DISPLAY_TYPE_NETWORK: {
+    case TY_DISPLAY_TP_NETWORK: {
         DIS_WIFI_STATUS_E status = ((DIS_WIFI_STATUS_E *)msg_data->data)[0];
         ui_set_network(status);
     } break;
@@ -165,7 +161,7 @@ OPERATE_RET app_display_init(void)
 
     THREAD_CFG_T cfg = {
         .thrdname = "chat_ui",
-        .priority = THREAD_PRIO_1,
+        .priority = THREAD_PRIO_2,
         .stackDepth = 1024 * 4,
     };
 
@@ -183,9 +179,10 @@ OPERATE_RET app_display_init(void)
  * @param len Length of the message data
  * @return OPERATE_RET Result of sending the message, OPRT_OK indicates success
  */
-OPERATE_RET app_display_send_msg(UI_DISPLAY_TYPE_E tp, const uint8_t *data, int len)
+OPERATE_RET app_display_send_msg(TY_DISPLAY_TYPE_E tp, uint8_t *data, int len)
 {
     DISP_CHAT_MSG_T chat_msg;
+    OPERATE_RET rt = OPRT_OK;
 
     chat_msg.type = tp;
     chat_msg.len = len;
@@ -200,7 +197,7 @@ OPERATE_RET app_display_send_msg(UI_DISPLAY_TYPE_E tp, const uint8_t *data, int 
         chat_msg.data = NULL;
     }
 
-    tkl_queue_post(sg_app_display.queue_hdl, &chat_msg, 0xFFFFFFFF);
+    TUYA_CALL_ERR_LOG(tkl_queue_post(sg_app_display.queue_hdl, &chat_msg, 0xFFFFFFFF));
 
     return OPRT_OK;
 }
