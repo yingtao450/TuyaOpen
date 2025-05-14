@@ -199,6 +199,9 @@ static void __app_display_msg_handle(DISPLAY_MSG_T *msg_data)
         char *wifi_icon = __ui_wifi_icon_get(status);
         ui_set_network(wifi_icon);
     } break;
+    case TY_DISPLAY_TP_CHAT_MODE: {
+        ui_set_chat_mode(msg_data->data);
+    } break;
     default: {
         PR_ERR("Invalid display type: %d", msg_data->type);
     } break;
