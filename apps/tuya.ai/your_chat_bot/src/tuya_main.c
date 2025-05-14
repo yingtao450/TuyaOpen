@@ -313,14 +313,15 @@ void user_main(void)
 
     PR_DEBUG("tuya_iot_init success");
 
+#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
+    app_display_init();
+#endif
+
     ret = app_chat_bot_init();
     if (ret != OPRT_OK) {
         PR_ERR("tuya_audio_recorde_init failed");
     }
 
-#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
-    app_display_init();
-#endif
     app_system_info();
 
     /* Start tuya iot task */
