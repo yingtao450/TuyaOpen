@@ -980,10 +980,10 @@ static void __ai_basic_get_send_frag(AI_PACKET_PT type, uint32_t frag_len, uint3
     uint32_t actual_frag_len = 0;
     if (AI_PT_IMAGE == type) {
         offset = &(ai_basic_proto->send_frag_mng[0].offset);
-        actual_frag_len = frag_len - SIZEOF(AI_IMAGE_HEAD_T);
+        actual_frag_len = frag_len - sizeof(AI_IMAGE_HEAD_T);
     } else if (AI_PT_FILE == type) {
         offset = &(ai_basic_proto->send_frag_mng[1].offset);
-        actual_frag_len = frag_len - SIZEOF(AI_FILE_HEAD_T);
+        actual_frag_len = frag_len - sizeof(AI_FILE_HEAD_T);
     } else {
         PR_ERR("get unknow type:%d", type);
         return;
@@ -1638,7 +1638,7 @@ EXIT:
     if (ai_basic_proto->recv_frag_mng.data) {
         Free(ai_basic_proto->recv_frag_mng.data);
     }
-    memset(&ai_basic_proto->recv_frag_mng, 0, SIZEOF(AI_RECV_FRAG_MNG_T));
+    memset(&ai_basic_proto->recv_frag_mng, 0, sizeof(AI_RECV_FRAG_MNG_T));
     return recv_len;
 }
 
