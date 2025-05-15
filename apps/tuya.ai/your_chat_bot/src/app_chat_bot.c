@@ -384,7 +384,8 @@ OPERATE_RET app_chat_bot_init(void)
 
     PR_NOTICE("work:%s",  sg_chat_bot.work->display_text);
 
+#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
     app_display_send_msg(TY_DISPLAY_TP_CHAT_MODE, sg_chat_bot.work->display_text, strlen(sg_chat_bot.work->display_text));
-
+#endif
     return OPRT_OK;
 }
