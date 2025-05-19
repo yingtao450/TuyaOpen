@@ -382,6 +382,7 @@ static uint8_t __get_words_from_stream_ringbuff(APP_UI_STREAM_T *stream, uint8_t
     return get_num;
 }
 
+#include "tal_log.h"
 
 static void __stream_timer_cb(lv_timer_t *lv_timer)
 {
@@ -402,10 +403,14 @@ static void __stream_timer_cb(lv_timer_t *lv_timer)
 
     lv_coord_t content_height = lv_obj_get_height(stream->msg_cont);
     lv_coord_t height = lv_obj_get_height(sg_ui.ui.content);
-    lv_coord_t y_position = content_height;
 
     if(content_height > height) {
-        lv_obj_scroll_to_y(sg_ui.ui.content, y_position, LV_ANIM_OFF);
+        lv_coord_t offset = 0;
+        offset = lv_obj_get_scroll_bottom(sg_ui.ui.content);
+        if(offset > 0) {
+            lv_obj_scroll_by_bounded(sg_ui.ui.content, 0, -offset, LV_ANIM_OFF);
+            PR_DEBUG("offset:%d", offset);  
+        }
     }else {
         lv_obj_scroll_to_view_recursive(stream->msg_cont, LV_ANIM_OFF);   
     }
@@ -462,7 +467,7 @@ void ui_set_assistant_msg_stream_start(void)
     lv_obj_t *text_cont = lv_obj_create(sg_ui.stream.bubble);
     lv_obj_remove_style_all(text_cont);
     lv_obj_set_size(text_cont, LV_PCT(100), LV_SIZE_CONTENT);
-    lv_obj_set_flex_flow(text_cont, LV_FLEX_FLOW_COLUMN);
+    // lv_obj_set_flex_flow(text_cont, LV_FLEX_FLOW_COLUMN);
 
     sg_ui.stream.label = lv_label_create(text_cont);
     lv_label_set_text(sg_ui.stream.label, "");
