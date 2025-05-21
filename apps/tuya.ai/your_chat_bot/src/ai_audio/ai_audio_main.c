@@ -50,7 +50,7 @@ typedef struct {
 ***********************************************************/
 static AI_AUDIO_INFORM_CB sg_ai_audio_inform_cb = NULL;
 static AI_AUDIO_WORK_MODE_E sg_ai_audio_work_mode = AI_AUDIO_MODE_MANUAL_SINGLE_TALK;
-static bool sg_is_chating = false;
+static AI_AUDIO_STATE_E sg_ai_audio_state = AI_AUDIO_STATE_IDLE;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
@@ -61,26 +61,16 @@ static void __ai_audio_agent_event_cb(AI_EVENT_TYPE event, AI_EVENT_ID event_id)
     switch (event) {
     case AI_EVENT_START:
     break;
-
     case AI_EVENT_END:
-        sg_is_chating = false;
     break;
-
     case AI_EVENT_CHAT_BREAK:
-        PR_DEBUG("chat break");
-        if (ai_audio_player_is_playing()) {
-            ai_audio_player_stop();
-        }
-        sg_is_chating = false;
     break;
-
-    case AI_EVENT_SERVER_VAD:
-        PR_DEBUG("chat break");
+    case AI_EVENT_SERVER_VAD: {
+        PR_DEBUG("server vad");
         if (ai_audio_player_is_playing()) {
             ai_audio_player_stop();
         }
-        sg_is_chating = false;
-
+    }
     break;
     }
 
@@ -103,7 +93,9 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
                 ai_audio_input_restart_asr_awake_timer();
             }
         }else {
-            ai_audio_cloud_asr_set_idle(true);
+            if(AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK != sg_ai_audio_work_mode) {
+                ai_audio_cloud_asr_set_idle(true);
+            }
         }
     } break;
     case AI_AGENT_MSG_TP_AUDIO_START: {
@@ -124,6 +116,8 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
         }
 
         ai_audio_player_start(event_id);
+
+        sg_ai_audio_state = AI_AUDIO_STATE_AI_SPEAK;
     } break;
     case AI_AGENT_MSG_TP_AUDIO_DATA: {
         ai_audio_player_data_write(event_id, msg->data, msg->data_len, 0);
@@ -137,10 +131,9 @@ static void __ai_audio_agent_msg_cb(AI_AGENT_MSG_T *msg)
 
         if(AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK == sg_ai_audio_work_mode) {
             ai_audio_input_restart_asr_awake_timer();
-        }else if(AI_AUDIO_WORK_ASR_WAKEUP_SINGLE_TALK == sg_ai_audio_work_mode) {
-            if (sg_ai_audio_inform_cb) {
-                sg_ai_audio_inform_cb(AI_AUDIO_EVT_ASR_WAKEUP_END, NULL, 0, NULL);
-            }
+            sg_ai_audio_state = AI_AUDIO_STATE_LISTEN;
+        }else {
+            sg_ai_audio_state = AI_AUDIO_STATE_LISTEN;
         }
 
         if(event_id) {
@@ -183,8 +176,7 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
         break;
     case AI_AUDIO_INPUT_EVT_GET_VALID_VOICE_START: {
         ai_audio_cloud_asr_start();
-        sg_is_chating = true;
-
+        sg_ai_audio_state = AI_AUDIO_STATE_UPLOAD;
     } break;
     case AI_AUDIO_INPUT_EVT_GET_VALID_VOICE_STOP: {
         ai_audio_cloud_asr_stop();
@@ -199,9 +191,9 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
 
         ai_audio_player_play_alert(AI_AUDIO_ALERT_WAKEUP);
 
-        if (true == sg_is_chating) {
+        if (AI_AUDIO_STATE_UPLOAD == sg_ai_audio_state ||\
+            AI_AUDIO_STATE_AI_SPEAK == sg_ai_audio_state) {
             ai_audio_cloud_asr_set_idle(true);
-            sg_is_chating = false;
         }
 
         if (sg_ai_audio_inform_cb) {
@@ -210,11 +202,8 @@ static void __ai_audio_input_inform_handle(AI_AUDIO_INPUT_EVENT_E event, void *a
     }
     break;
     case AI_AUDIO_INPUT_EVT_ASR_WAKEUP_STOP: {
-
         if(AI_AUDIO_WORK_ASR_WAKEUP_FREE_TALK == sg_ai_audio_work_mode) {
-            if (sg_ai_audio_inform_cb) {
-                sg_ai_audio_inform_cb(AI_AUDIO_EVT_ASR_WAKEUP_END, NULL, 0, NULL);
-            }
+            sg_ai_audio_state = AI_AUDIO_STATE_LISTEN;
         }
     }
     break;
@@ -261,7 +250,7 @@ OPERATE_RET ai_audio_init(AI_AUDIO_CONFIG_T *cfg)
     TUYA_CALL_ERR_RETURN(ai_audio_input_init(&input_cfg, __ai_audio_input_inform_handle));
 
     TDL_AUDIO_HANDLE_T audio_hdl = NULL;
-    TUYA_CALL_ERR_RETURN(tdl_audio_find(AUDIO_DRIVER_NAME, &audio_hdl));
+    TUYA_CALL_ERR_RETURN(tdl_audio_find(AUDIO_CODEC_NAME, &audio_hdl));
     TUYA_CALL_ERR_RETURN(tdl_audio_volume_set(audio_hdl, ai_audio_get_volume()));
 
     TUYA_CALL_ERR_RETURN(ai_audio_cloud_asr_init());
@@ -290,7 +279,7 @@ OPERATE_RET ai_audio_set_volume(uint8_t volume)
     TUYA_CALL_ERR_LOG(tal_kv_set(AI_AUDIO_SPEAK_VOLUME_KEY, &volume, sizeof(volume)));
 
     TDL_AUDIO_HANDLE_T audio_hdl = NULL;
-    TUYA_CALL_ERR_RETURN(tdl_audio_find(AUDIO_DRIVER_NAME, &audio_hdl));
+    TUYA_CALL_ERR_RETURN(tdl_audio_find(AUDIO_CODEC_NAME, &audio_hdl));
     TUYA_CALL_ERR_LOG(tdl_audio_volume_set(audio_hdl, volume));
 
     return rt;
@@ -342,7 +331,7 @@ OPERATE_RET ai_audio_set_open(bool is_open)
 
         ai_audio_cloud_asr_set_idle(true);
 
-        sg_is_chating = false;
+        sg_ai_audio_state = AI_AUDIO_STATE_IDLE;
     }
 
     return OPRT_OK;

@@ -4,7 +4,7 @@ config CHIP_CHOICE
 
 config BOARD_CHOICE
     string
-    default "xingzhi-cube-0.96oled-wifi"
+    default "WAVESHARE-ESP32-S3-Touch-AMOLED-1.8"
 
 config BOARD_CONFIG
     bool
@@ -12,7 +12,4 @@ config BOARD_CONFIG
     select ENABLE_AUDIO
     select ENABLE_DISPLAY
     select PLATFORM_FLASHSIZE_16M
-    
-config AUDIO_DRIVER_NAME
-    string "the name of the audio driver"
-    default "audio_driver"
+    select ENABLE_AUDIO_CODECS

@@ -1,19 +1,19 @@
 /**
- * @file bread_compact_wifi.c
- * @brief bread_compact_wifi module is used to
- * @version 0.1
- * @date 2025-04-23
+ * @file waveshare_esp32_s3_touch_amoled_1_8.c
+ * @brief Implementation of common board-level hardware registration APIs for peripherals.
+ *
+ * @copyright Copyright (c) 2021-2025 Tuya Inc. All Rights Reserved.
  */
 
 #include "tuya_cloud_types.h"
 
-#include "tal_log.h"
-#include "tal_system.h"
+#include "tal_api.h"
 
-#include "board_config.h"
+#include "board_com_api.h"
 
 #include "tdd_audio_8311_codec.h"
 
+#include "board_config.h"
 #include "tca9554.h"
 #include "lcd_sh8601.h"
 
@@ -36,9 +36,11 @@
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-
-int app_audio_driver_init(const char *name)
+static OPERATE_RET __board_register_audio(void)
 {
+    OPERATE_RET rt = OPRT_OK;
+
+#if defined(AUDIO_CODEC_NAME)
     TDD_AUDIO_8311_CODEC_T cfg = {0};
     cfg.i2c_id = I2C_NUM;
     cfg.i2c_scl_io = I2C_SCL_IO;
@@ -57,7 +59,24 @@ int app_audio_driver_init(const char *name)
     cfg.dma_frame_num = AUDIO_CODEC_DMA_FRAME_NUM;
     cfg.defaule_volume = 80;
 
-    return tdd_audio_8311_codec_register(name, cfg);
+    TUYA_CALL_ERR_RETURN(tdd_audio_8311_codec_register(AUDIO_CODEC_NAME, cfg));
+#endif
+
+    return rt;
+}
+
+/**
+ * @brief Registers all the hardware peripherals (audio, button, LED) on the board.
+ * 
+ * @return Returns OPERATE_RET_OK on success, or an appropriate error code on failure.
+ */
+OPERATE_RET board_register_hardware(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    TUYA_CALL_ERR_LOG(__board_register_audio());
+
+    return rt;
 }
 
 int board_display_init(void)

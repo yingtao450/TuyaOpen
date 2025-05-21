@@ -1,6 +1,5 @@
 /**
- * @file tdd_audio_t5ai.h
- * @brief tdd_audio_t5ai module is used to
+ * @file tdd_audio_tkl.h
  * @version 0.1
  * @date 2025-04-24
  */
@@ -10,6 +9,7 @@
 
 #include "tuya_cloud_types.h"
 
+#if defined(ENABLE_MEDIA) && (ENABLE_MEDIA == 1)
 #include "tdl_audio_driver.h"
 
 #include "tkl_audio.h"
@@ -42,10 +42,12 @@ typedef struct {
 ********************function declaration********************
 ***********************************************************/
 
-OPERATE_RET tdd_audio_t5ai_register(char *name, TDD_AUDIO_T5AI_T cfg);
+OPERATE_RET tdd_audio_register(char *name, TDD_AUDIO_T5AI_T cfg);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* __TDD_AUDIO_T5AI_H__ */

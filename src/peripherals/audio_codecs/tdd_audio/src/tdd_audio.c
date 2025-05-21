@@ -1,6 +1,5 @@
 /**
- * @file tdd_audio_t5ai.c
- * @brief tdd_audio_t5ai module is used to
+ * @file tdd_audio_tkl.c
  * @version 0.1
  * @date 2025-04-24
  */
@@ -10,7 +9,7 @@
 #include "tal_log.h"
 #include "tal_memory.h"
 
-#include "tdd_audio_t5ai.h"
+#include "tdd_audio.h"
 
 #include "tkl_audio.h"
 
@@ -175,7 +174,7 @@ static OPERATE_RET __tdd_audio_close(TDD_AUDIO_HANDLE_T handle)
     return rt;
 }
 
-OPERATE_RET tdd_audio_t5ai_register(char *name, TDD_AUDIO_T5AI_T cfg)
+OPERATE_RET tdd_audio_register(char *name, TDD_AUDIO_T5AI_T cfg)
 {
     OPERATE_RET rt = OPRT_OK;
     TDD_AUDIO_DATA_HANDLE_T *_hdl = NULL;

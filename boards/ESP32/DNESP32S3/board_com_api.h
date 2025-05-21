@@ -1,12 +1,13 @@
 /**
- * @file app_board_api.h
- * @brief app_board_api module is used to
- * @version 0.1
- * @date 2025-04-23
+ * @file board_com_api.h
+ * @author Tuya Inc.
+ * @brief Header file for common board-level hardware registration APIs.
+ *
+ * @copyright Copyright (c) 2021-2025 Tuya Inc. All Rights Reserved.
  */
 
-#ifndef __APP_BOARD_API_H__
-#define __APP_BOARD_API_H__
+#ifndef __BOARD_COM_API_H__
+#define __BOARD_COM_API_H__
 
 #include "tuya_cloud_types.h"
 
@@ -27,15 +28,14 @@ extern "C" {
 ***********************************************************/
 
 /**
- * @brief Initialize the audio driver
- *
- * @param name Name of the audio driver
- * @return OPERATE_RET Initialization result, OPRT_OK indicates success
+ * @brief Registers all the hardware peripherals (audio, button, LED) on the board.
+ * 
+ * @return Returns OPERATE_RET_OK on success, or an appropriate error code on failure.
  */
-OPERATE_RET app_audio_driver_init(const char *name);
+OPERATE_RET board_register_hardware(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __APP_BOARD_API_H__ */
+#endif /* __BOARD_COM_API_H__ */

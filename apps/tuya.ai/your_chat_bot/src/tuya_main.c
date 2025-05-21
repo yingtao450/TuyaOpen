@@ -40,6 +40,8 @@
 #include "app_display.h"
 #endif
 
+#include "board_com_api.h"
+
 #include "app_chat_bot.h"
 #include "ai_audio.h"
 #include "reset_netcfg.h"
@@ -313,9 +315,10 @@ void user_main(void)
 
     PR_DEBUG("tuya_iot_init success");
     
-#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
-    app_display_init();
-#endif
+    ret = board_register_hardware();
+    if (ret != OPRT_OK) {
+        PR_ERR("board_register_hardware failed");
+    }
 
     ret = app_chat_bot_init();
     if (ret != OPRT_OK) {
