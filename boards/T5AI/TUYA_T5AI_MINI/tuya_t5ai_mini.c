@@ -52,13 +52,13 @@ OPERATE_RET __board_register_audio(void)
     cfg.aec_enable = 0;
 #endif
 
-    cfg.ai_chn = TKL_AI_0;
+    cfg.ai_chn      = TKL_AI_0;
     cfg.sample_rate = TKL_AUDIO_SAMPLE_16K;
-    cfg.data_bits = TKL_AUDIO_DATABITS_16;
-    cfg.channel = TKL_AUDIO_CHANNEL_MONO;
+    cfg.data_bits   = TKL_AUDIO_DATABITS_16;
+    cfg.channel     = TKL_AUDIO_CHANNEL_MONO;
 
-    cfg.spk_sample_rate = TKL_AUDIO_SAMPLE_16K;
-    cfg.spk_pin = BOARD_SPEAKER_EN_PIN;
+    cfg.spk_sample_rate  = TKL_AUDIO_SAMPLE_16K;
+    cfg.spk_pin          = BOARD_SPEAKER_EN_PIN;
     cfg.spk_pin_polarity = TUYA_GPIO_LEVEL_LOW;
 
     TUYA_CALL_ERR_RETURN(tdd_audio_register(AUDIO_CODEC_NAME, cfg));
