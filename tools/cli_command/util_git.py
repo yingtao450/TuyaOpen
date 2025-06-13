@@ -7,7 +7,7 @@ from git import Repo, Git
 from git.exc import GitCommandError
 from git import RemoteProgress
 
-from tools.cli_command.util import get_logger
+from tools.cli_command.util import get_logger, do_subprocess
 
 
 MIRROR_LIST = [
@@ -29,6 +29,11 @@ MIRROR_LIST = [
 
 def set_repo_mirro(unset=False):
     logger = get_logger()
+    if unset:
+        logger.debug("Unset mirror repo.")
+    else:
+        logger.debug("Set mirror repo.")
+
     g = Git()
     for target in MIRROR_LIST:
         repo_name = target.split('/')[1]
@@ -59,13 +64,27 @@ def set_repo_mirro(unset=False):
 
 
 def get_git_tag_describe(repo_path):
-    cmd = f"git -C {repo_path} describe --tags"
+    logger = get_logger()
+
+    # Check if repository path exists
+    if not os.path.exists(repo_path):
+        logger.error(f"Repository path not found: {repo_path}")
+        return ""
+
     try:
         repo = Repo(repo_path)
+        if repo.bare:
+            logger.warning(f"[{repo_path}] is bare repository.")
+            return ""
+        tags = list(repo.tags)
+        if not tags:
+            logger.debug(f"No tags found in repository: {repo_path}")
+            return ""
         describe_output = repo.git.describe('--tags')
         return describe_output
     except Exception as e:
-        get_logger().error(f"[{cmd}]: {e}")
+        cmd = f"git -C {repo_path} describe --tags"
+        logger.error(f"[{cmd}]: {e}")
         return ""
 
 
@@ -158,6 +177,8 @@ target: {target}")
         return False
 
     try:
+        origin = repo.remote(name="origin")
+        origin.fetch()
         repo.git.checkout(target)
         logger.info(f"Git checkout {target}.")
         return True
@@ -193,16 +214,11 @@ def download_submoudules(repo_path):
         logger.warning("Not found submodules.")
         return True
 
-    ret = True
     logger.info("Downloading submoudules ...")
-    for submodule in submodules:
-        try:
-            logger.debug(f">>>{submodule.name}")
-            submodule.update(init=True, recursive=True, progress=None)
-        except GitCommandError as e:
-            logger.error(f"Download [{submodule.name}]: {e}")
-            ret = False
-            continue
-    if ret:
-        logger.info("Download submoudules successfully.")
-    return ret
+    cmd = f"cd {repo_path} && git submodule update --init"
+    if 0 != do_subprocess(cmd):
+        logger.error("Download submoudules failed.")
+        return False
+
+    logger.info("Download submoudules successfully.")
+    return True
