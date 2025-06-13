@@ -23,9 +23,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-
+#ifdef LVGL_ENABLE_TOUCH
 static void touchpad_init(void *device);
 static void touchpad_read(lv_indev_t *indev, lv_indev_data_t *data);
+#endif
 
 #ifdef LVGL_ENABLE_ENCODER
 static void encoder_init(void);

@@ -270,10 +270,11 @@ OPERATE_RET tdl_disp_spi_device_register(char *name, TDD_DISP_SPI_CFG_T *spi)
 
     disp_spi_dev->init_seq = spi->init_seq;
 
-    disp_spi_dev_info.type   = TUYA_DISPLAY_SPI;
-    disp_spi_dev_info.width  = spi->cfg.width;
-    disp_spi_dev_info.height = spi->cfg.height;
-    disp_spi_dev_info.fmt    = spi->cfg.pixel_fmt;
+    disp_spi_dev_info.type       = TUYA_DISPLAY_SPI;
+    disp_spi_dev_info.width      = spi->cfg.width;
+    disp_spi_dev_info.height     = spi->cfg.height;
+    disp_spi_dev_info.fmt        = spi->cfg.pixel_fmt;
+    disp_spi_dev_info.rotation   = spi->rotation;
 
     memcpy(&disp_spi_dev_info.bl, &spi->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
     memcpy(&disp_spi_dev_info.power, &spi->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));

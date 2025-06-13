@@ -237,10 +237,11 @@ OPERATE_RET tdl_disp_rgb_device_register(char *name, TDD_DISP_RGB_CFG_T *rgb)
 
     tdd_rgb->init_cb = rgb->init_cb;
 
-    rgb_dev_info.type   = TUYA_DISPLAY_RGB;
-    rgb_dev_info.width  = rgb->cfg.width;
-    rgb_dev_info.height = rgb->cfg.height;
-    rgb_dev_info.fmt    = rgb->cfg.pixel_fmt;
+    rgb_dev_info.type       = TUYA_DISPLAY_RGB;
+    rgb_dev_info.width      = rgb->cfg.width;
+    rgb_dev_info.height     = rgb->cfg.height;
+    rgb_dev_info.fmt        = rgb->cfg.pixel_fmt;
+    rgb_dev_info.rotation   = rgb->rotation;
 
     memcpy(&rgb_dev_info.bl, &rgb->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
     memcpy(&rgb_dev_info.power, &rgb->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));

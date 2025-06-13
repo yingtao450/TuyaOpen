@@ -104,6 +104,8 @@ extern "C" {
 ***********************************************************/
 OPERATE_RET tdd_disp_spi_st7789_register(char *name, DISP_SPI_DEVICE_CFG_T *dev_cfg);
 
+OPERATE_RET tdd_disp_mcu8080_st7789_register(char *name, DISP_MCU8080_DEVICE_CFG_T *dev_cfg);
+
 #ifdef __cplusplus
 }
 #endif

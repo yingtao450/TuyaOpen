@@ -5,7 +5,6 @@
  */
 #include "tal_api.h"
 
-// #define ENABLE_QSPI 1
 #if defined(ENABLE_QSPI) && (ENABLE_QSPI==1)
 #include "tkl_qspi.h"
 #include "tkl_gpio.h"
@@ -20,10 +19,6 @@
 ***********************typedef define***********************
 ***********************************************************/
 typedef struct {
-    SEM_HANDLE tx_sem;
-} DISP_QSPI_SYNC_T;
-
-typedef struct {
     DISP_QSPI_BASE_CFG_T       cfg;
     const uint8_t             *init_seq;
 }DISP_QSPI_DEV_T;
@@ -36,47 +31,11 @@ typedef struct {
 /***********************************************************
 ***********************variable define**********************
 ***********************************************************/
-DISP_QSPI_SYNC_T sg_disp_qspi_sync[TUYA_SPI_NUM_MAX] = {0};
 
-static THREAD_HANDLE lcd_qspi_disp_thread_hdl = NULL;
-static SEM_HANDLE g_lcd_qspi_task_sem;
-static SEM_HANDLE g_lcd_qspi_disp_sem;
-static uint32_t *g_lcd_qspi_imag_addr = NULL;
-static bool lcd_qspi_disp_task_running = false;
 
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-
-static void __disp_qspi_task_entry(void *arg)
-{
-    DISP_QSPI_DEV_T *qspi_device = (DISP_QSPI_DEV_T *)arg;
-    tal_semaphore_post(g_lcd_qspi_task_sem);
-
-    while(lcd_qspi_disp_task_running) {
-        tal_semaphore_wait(g_lcd_qspi_disp_sem, 5);
-
-        if (g_lcd_qspi_imag_addr) {
-            bk_lcd_qspi_send_data(LCD_QSPI_ID, qspi_device, g_lcd_qspi_imag_addr, qspi_device->qspi->frame_len);
-        }
-    }
-
-    tal_semaphore_post(g_lcd_qspi_task_sem);
-
-    THREAD_HANDLE tmp_thread = lcd_qspi_disp_thread_hdl;
-    lcd_qspi_disp_thread_hdl = NULL;
-    tal_thread_delete(tmp_thread);
-}
-
-
-static void __disp_qspi_isr_cb(TUYA_QSPI_NUM_E port, TUYA_QSPI_IRQ_EVT_E event)
-{
-    if(event == TUYA_QSPI_EVENT_TX) {
-        if(sg_disp_qspi_sync[port].tx_sem) {
-            tal_semaphore_post(sg_disp_qspi_sync[port].tx_sem);
-        }
-   }
-}
 
 static OPERATE_RET __disp_qspi_gpio_init(DISP_QSPI_BASE_CFG_T *p_cfg)
 {
@@ -103,41 +62,20 @@ static OPERATE_RET __disp_qspi_init(TUYA_SPI_NUM_E port, uint32_t spi_clk)
     OPERATE_RET rt = OPRT_OK;
 
     /*spi init*/
-    TUYA_SPI_BASE_CFG_T spi_cfg = {.mode = TUYA_SPI_MODE0,
-                                   .freq_hz = spi_clk,
-                                   .databits = TUYA_SPI_DATA_BIT8,
-                                   .bitorder = TUYA_SPI_ORDER_MSB2LSB,
-                                   .role = TUYA_SPI_ROLE_MASTER,
-                                   .type = TUYA_SPI_AUTO_TYPE,
-                                   .spi_dma_flags = 1};
+    TUYA_QSPI_BASE_CFG_T qspi_cfg = {
+        .role = TUYA_QSPI_ROLE_MASTER,
+        .mode = TUYA_QSPI_MODE0,
+        .baudrate = spi_clk,
+        .is_dma = 1,
+    };
 
-    PR_NOTICE("spi init %d\r\n", spi_cfg.freq_hz);
-    TUYA_CALL_ERR_RETURN(tkl_spi_init(port, &spi_cfg));
-    TUYA_CALL_ERR_RETURN(tkl_spi_irq_init(port, __disp_spi_isr_cb));
-    TUYA_CALL_ERR_RETURN(tkl_spi_irq_enable(port));
+    PR_NOTICE("spi init %d\r\n", qspi_cfg.baudrate);
+    TUYA_CALL_ERR_RETURN(tkl_qspi_init(port, &qspi_cfg));
 
     return rt;
 }
 
-static OPERATE_RET __disp_qspi_send(TUYA_SPI_NUM_E port, uint8_t *data, uint32_t size)
-{
-    OPERATE_RET rt = OPRT_OK;
-    uint32_t left_len = size, send_len = 0;
-    uint32_t dma_max_size = tkl_spi_get_max_dma_data_length();
-
-    while(left_len > 0) {
-        send_len = (left_len > dma_max_size) ? dma_max_size : (left_len);
-        TUYA_CALL_ERR_RETURN(tkl_spi_send(port, data + size - left_len, send_len));
-
-        TUYA_CALL_ERR_RETURN(tal_semaphore_wait(sg_disp_spi_sync[port].tx_sem, 5000));
-
-        left_len -= send_len;
-    }
-
-    return rt;
-}
-
-static OPERATE_RET __disp_qspi_send_cmd(DISP_SPI_BASE_CFG_T *p_cfg, uint8_t cmd)
+static OPERATE_RET __disp_qspi_send_cmd(DISP_QSPI_BASE_CFG_T *p_cfg, uint8_t cmd)
 {
     OPERATE_RET rt = OPRT_OK;
 
@@ -148,14 +86,14 @@ static OPERATE_RET __disp_qspi_send_cmd(DISP_SPI_BASE_CFG_T *p_cfg, uint8_t cmd)
     tkl_gpio_write(p_cfg->cs_pin, TUYA_GPIO_LEVEL_LOW);
     tkl_gpio_write(p_cfg->dc_pin, TUYA_GPIO_LEVEL_LOW);
 
-    rt = __disp_spi_send(p_cfg->port, &cmd, 1);
+    tkl_qspi_send_cmd(p_cfg->port, cmd);
 
     tkl_gpio_write(p_cfg->cs_pin, TUYA_GPIO_LEVEL_HIGH);
 
     return rt;
 }
 
-static OPERATE_RET __disp_qspi_send_data(DISP_SPI_BASE_CFG_T *p_cfg, uint8_t *data, uint32_t data_len)
+static OPERATE_RET __disp_qspi_send_data(DISP_QSPI_BASE_CFG_T *p_cfg, uint8_t *data, uint32_t data_len)
 {
     OPERATE_RET rt = OPRT_OK;
 
@@ -166,14 +104,14 @@ static OPERATE_RET __disp_qspi_send_data(DISP_SPI_BASE_CFG_T *p_cfg, uint8_t *da
     tkl_gpio_write(p_cfg->cs_pin, TUYA_GPIO_LEVEL_LOW);
     tkl_gpio_write(p_cfg->dc_pin, TUYA_GPIO_LEVEL_HIGH);
 
-    rt = __disp_spi_send(p_cfg->port, data, data_len);
+    tkl_qspi_send_data_indirect_mode(p_cfg->port, data, data_len);
 
     tkl_gpio_write(p_cfg->cs_pin, TUYA_GPIO_LEVEL_HIGH);
 
     return rt;
 }
 
-static void __disp_qspi_set_window(DISP_SPI_BASE_CFG_T *p_cfg, uint32_t width, uint32_t height)
+static void __disp_qspi_set_window(DISP_QSPI_BASE_CFG_T *p_cfg, uint32_t width, uint32_t height)
 {
     uint8_t lcd_data[4];
 
@@ -185,15 +123,15 @@ static void __disp_qspi_set_window(DISP_SPI_BASE_CFG_T *p_cfg, uint32_t width, u
     lcd_data[1] = 0;
     lcd_data[2] = (width >> 8) & 0xFF;
     lcd_data[3] = (width & 0xFF) - 1;
-    __disp_spi_send_cmd(p_cfg, p_cfg->cmd_caset);
-    __disp_spi_send_data(p_cfg, lcd_data, 4);
+    __disp_qspi_send_cmd(p_cfg, p_cfg->cmd_caset);
+    __disp_qspi_send_data(p_cfg, lcd_data, 4);
 
     lcd_data[0] = 0;
     lcd_data[1] = 0;
     lcd_data[2] = (height >> 8) & 0xFF;
     lcd_data[3] = (height & 0xFF) - 1;
-    __disp_spi_send_cmd(p_cfg, p_cfg->cmd_raset);
-    __disp_spi_send_data(p_cfg, lcd_data, 4);
+    __disp_qspi_send_cmd(p_cfg, p_cfg->cmd_raset);
+    __disp_qspi_send_data(p_cfg, lcd_data, 4);
 }
 
 static void __tdd_disp_reset(TUYA_GPIO_NUM_E rst_pin)
@@ -208,7 +146,7 @@ static void __tdd_disp_reset(TUYA_GPIO_NUM_E rst_pin)
     tal_system_sleep(100);
 }
 
-static void __tdd_disp_init_seq(DISP_SPI_BASE_CFG_T *p_cfg, const uint8_t *init_seq)
+static void __tdd_disp_init_seq(DISP_QSPI_BASE_CFG_T *p_cfg, const uint8_t *init_seq)
 {
 	uint8_t *init_line = (uint8_t *)init_seq, *p_data = NULL;
     uint8_t data_len = 0, sleep_time = 0, cmd = 0;
@@ -226,8 +164,8 @@ static void __tdd_disp_init_seq(DISP_SPI_BASE_CFG_T *p_cfg, const uint8_t *init_
             p_data = NULL;
         }
 
-        __disp_spi_send_cmd(p_cfg, cmd);
-	    __disp_spi_send_data(p_cfg, p_data, data_len);
+        __disp_qspi_send_cmd(p_cfg, cmd);
+	    __disp_qspi_send_data(p_cfg, p_data, data_len);
 
         tal_system_sleep(sleep_time);
         init_line += init_line[0] + 2;
@@ -237,23 +175,17 @@ static void __tdd_disp_init_seq(DISP_SPI_BASE_CFG_T *p_cfg, const uint8_t *init_
 static OPERATE_RET __tdd_display_qspi_open(TDD_DISP_DEV_HANDLE_T device)
 {
     OPERATE_RET rt = OPRT_OK;
-    DISP_SPI_DEV_T *disp_spi_dev = NULL;
-    DISP_SPI_SYNC_T *spi_sync = NULL;
+    DISP_QSPI_DEV_T *disp_qspi_dev = NULL;
 
     if(NULL == device) {
         return OPRT_INVALID_PARM;
     }
-    disp_spi_dev = (DISP_SPI_DEV_T *)device;
+    disp_qspi_dev = (DISP_QSPI_DEV_T *)device;
 
-    spi_sync = &sg_disp_spi_sync[disp_spi_dev->cfg.port];
-    if(NULL == spi_sync->tx_sem) {
-        TUYA_CALL_ERR_RETURN(tal_semaphore_create_init(&(spi_sync->tx_sem), 0, 1));
-    }
+    TUYA_CALL_ERR_RETURN(__disp_qspi_init(disp_qspi_dev->cfg.port, disp_qspi_dev->cfg.spi_clk));
+    TUYA_CALL_ERR_RETURN(__disp_qspi_gpio_init(&(disp_qspi_dev->cfg)));
 
-    TUYA_CALL_ERR_RETURN(__disp_spi_init(disp_spi_dev->cfg.port, disp_spi_dev->cfg.spi_clk));
-    TUYA_CALL_ERR_RETURN(__disp_spi_gpio_init(&(disp_spi_dev->cfg)));
-
-    __tdd_disp_init_seq(&(disp_spi_dev->cfg), disp_spi_dev->init_seq);
+    __tdd_disp_init_seq(&(disp_qspi_dev->cfg), disp_qspi_dev->init_seq);
 
     return OPRT_OK;
 }
@@ -261,17 +193,17 @@ static OPERATE_RET __tdd_display_qspi_open(TDD_DISP_DEV_HANDLE_T device)
 static OPERATE_RET __tdd_display_qspi_flush(TDD_DISP_DEV_HANDLE_T device, TDL_DISP_FRAME_BUFF_T *frame_buff)
 {
     OPERATE_RET rt = OPRT_OK;
-    DISP_SPI_DEV_T *disp_spi_dev = NULL;
+    DISP_QSPI_DEV_T *disp_qspi_dev = NULL;
 
     if(NULL == device || NULL == frame_buff) {
         return OPRT_INVALID_PARM;
     }
 
-    disp_spi_dev = (DISP_SPI_DEV_T *)device;
+    disp_qspi_dev = (DISP_QSPI_DEV_T *)device;
 
-    __disp_spi_set_window(&disp_spi_dev->cfg, frame_buff->width, frame_buff->height);
-    __disp_spi_send_cmd(&disp_spi_dev->cfg, disp_spi_dev->cfg.cmd_ramwr);
-    __disp_spi_send_data(&disp_spi_dev->cfg, frame_buff->frame, frame_buff->len);
+    __disp_qspi_set_window(&disp_qspi_dev->cfg, frame_buff->width, frame_buff->height);
+    __disp_qspi_send_cmd(&disp_qspi_dev->cfg, disp_qspi_dev->cfg.cmd_ramwr);
+    __disp_qspi_send_data(&disp_qspi_dev->cfg, frame_buff->frame, frame_buff->len);
 
     return rt;
 }
@@ -284,37 +216,38 @@ static OPERATE_RET __tdd_display_qspi_close(TDD_DISP_DEV_HANDLE_T device)
 OPERATE_RET tdl_disp_qspi_device_register(char *name, TDD_DISP_QSPI_CFG_T *spi)
 {
     OPERATE_RET rt = OPRT_OK;
-    DISP_QSPI_DEV_T *disp_spi_dev = NULL;
-    TDD_DISP_DEV_INFO_T disp_spi_dev_info;
+    DISP_QSPI_DEV_T *disp_qspi_dev = NULL;
+    TDD_DISP_DEV_INFO_T disp_qspi_dev_info;
 
     if(NULL == name || NULL == spi) {
         return OPRT_INVALID_PARM;
     }
 
-    disp_spi_dev = tal_malloc(sizeof(DISP_QSPI_DEV_T));
-    if(NULL == disp_spi_dev) {
+    disp_qspi_dev = tal_malloc(sizeof(DISP_QSPI_DEV_T));
+    if(NULL == disp_qspi_dev) {
         return OPRT_MALLOC_FAILED;
     }
-    memcpy(&disp_spi_dev->cfg, &spi->cfg, sizeof(DISP_QSPI_BASE_CFG_T));
+    memcpy(&disp_qspi_dev->cfg, &spi->cfg, sizeof(DISP_QSPI_BASE_CFG_T));
 
-    disp_spi_dev->init_seq = spi->init_seq;
+    disp_qspi_dev->init_seq = spi->init_seq;
 
-    disp_spi_dev_info.type   = TUYA_DISPLAY_QSPI;
-    disp_spi_dev_info.width  = spi->cfg.width;
-    disp_spi_dev_info.height = spi->cfg.height;
-    disp_spi_dev_info.fmt    = spi->cfg.pixel_fmt;
+    disp_qspi_dev_info.type       = TUYA_DISPLAY_QSPI;
+    disp_qspi_dev_info.width      = spi->cfg.width;
+    disp_qspi_dev_info.height     = spi->cfg.height;
+    disp_qspi_dev_info.fmt        = spi->cfg.pixel_fmt;
+    disp_qspi_dev_info.rotation   = spi->rotation;
 
-    memcpy(&disp_spi_dev_info.bl, &spi->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
-    memcpy(&disp_spi_dev_info.power, &spi->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
+    memcpy(&disp_qspi_dev_info.bl, &spi->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
+    memcpy(&disp_qspi_dev_info.power, &spi->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
 
-    TDD_DISP_INTFS_T disp_spi_intfs = {
+    TDD_DISP_INTFS_T disp_qspi_intfs = {
         .open  = __tdd_display_qspi_open,
         .flush = __tdd_display_qspi_flush,
         .close = __tdd_display_qspi_close,
     };
 
-    TUYA_CALL_ERR_RETURN(tdl_disp_device_register(name, (TDD_DISP_DEV_HANDLE_T)disp_spi_dev,
-                                                  &disp_spi_intfs, &disp_spi_dev_info));
+    TUYA_CALL_ERR_RETURN(tdl_disp_device_register(name, (TDD_DISP_DEV_HANDLE_T)disp_qspi_dev,
+                                                  &disp_qspi_intfs, &disp_qspi_dev_info));
 
     return OPRT_OK;
 }

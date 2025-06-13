@@ -23,10 +23,10 @@
 #include "tkl_output.h"
 #include "tkl_spi.h"
 #include "tkl_system.h"
-#include "tkl_display.h"
 
 #include "lvgl.h"
 #include "demos/lv_demos.h"
+#include "examples/lv_examples.h"
 #include "lv_vendor.h"
 #include "board_com_api.h"
 /***********************************************************
@@ -60,6 +60,8 @@ void user_main()
     board_register_hardware();
 
     lv_vendor_init(DISPLAY_NAME);
+
+// lv_example_gif_1();
 
     lv_demo_widgets();
 

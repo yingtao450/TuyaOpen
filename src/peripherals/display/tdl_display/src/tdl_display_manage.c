@@ -351,10 +351,11 @@ OPERATE_RET tdl_disp_device_register(char *name, TDD_DISP_DEV_HANDLE_T tdd_hdl, 
 
     strncpy(display_dev->name, name, DISPLAY_DEV_NAME_MAX_LEN);
 
-    display_dev->info.type   = dev_info->type;
-    display_dev->info.width  = dev_info->width;
-    display_dev->info.height = dev_info->height;
-    display_dev->info.fmt    = dev_info->fmt;
+    display_dev->info.type     = dev_info->type;
+    display_dev->info.width    = dev_info->width;
+    display_dev->info.height   = dev_info->height;
+    display_dev->info.fmt      = dev_info->fmt;
+    display_dev->info.rotation = dev_info->rotation;
 
     memcpy(&display_dev->bl, &dev_info->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
     memcpy(&display_dev->power, &dev_info->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));

@@ -58,6 +58,7 @@ static uint8_t * __disp_draw_buf_align_alloc(uint32_t size_bytes);
 static TDL_DISP_HANDLE_T sg_tdl_disp_hdl = NULL;
 static TDL_DISP_DEV_INFO_T sg_display_info;
 static TDL_DISP_FRAME_BUFF_T *sg_p_display_fb = NULL;
+static uint8_t *sg_rotate_buf = NULL;
 /**********************
  *      MACROS
  **********************/
@@ -99,6 +100,21 @@ void lv_port_disp_init(char *device)
     }
 
     lv_display_set_buffers(disp, buf_2_1, buf_2_2, buf_len, LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+    if (sg_display_info.rotation != TUYA_DISPLAY_ROTATION_0) {
+        if (sg_display_info.rotation == TUYA_DISPLAY_ROTATION_90) {
+            lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
+        }else if (sg_display_info.rotation == TUYA_DISPLAY_ROTATION_180){
+            lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_180);
+        }else if(sg_display_info.rotation == TUYA_DISPLAY_ROTATION_270){
+            lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
+        }
+
+        sg_rotate_buf = __disp_draw_buf_align_alloc(buf_len);
+        if (sg_rotate_buf == NULL) {
+            PR_ERR("lvgl rotate buffer malloc fail!\n");
+        }
+    }
 }
 
 void lv_port_disp_deinit(void)
@@ -199,15 +215,45 @@ static void disp_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px
     int offset = 0, y = 0;
     uint8_t *color_ptr = px_map;
     uint8_t *disp_buf = sg_p_display_fb->frame;
-    int32_t width = lv_area_get_width(area);
+    int32_t width = 0;
+    lv_area_t *target_area = (lv_area_t *)area;
 
 #if defined(LVGL_COLOR_16_SWAP) && (LVGL_COLOR_16_SWAP == 1)
     lv_draw_sw_rgb565_swap(px_map, lv_area_get_width(area) * lv_area_get_height(area));
 #endif
 
     if (disp_flush_enabled) {
-        offset = (area->y1 * LV_HOR_RES + area->x1) * BYTE_PER_PIXEL;
-        for (y = area->y1; y <= area->y2 && y < LV_VER_RES; y++) {
+        if(sg_rotate_buf) {
+            lv_display_rotation_t rotation = lv_display_get_rotation(disp);
+            lv_area_t rotated_area;
+
+            rotated_area.x1 = area->x1;
+            rotated_area.x2 = area->x2;
+            rotated_area.y1 = area->y1;
+            rotated_area.y2 = area->y2;
+
+            lv_color_format_t cf = lv_display_get_color_format(disp);
+            /*Calculate the position of the rotated area*/
+            lv_display_rotate_area(disp, &rotated_area);
+            /*Calculate the source stride (bytes in a line) from the width of the area*/
+            uint32_t src_stride = lv_draw_buf_width_to_stride(lv_area_get_width(area), cf);
+            /*Calculate the stride of the destination (rotated) area too*/
+            uint32_t dest_stride = lv_draw_buf_width_to_stride(lv_area_get_width(&rotated_area), cf);
+            /*Have a buffer to store the rotated area and perform the rotation*/
+            
+            int32_t src_w = lv_area_get_width(area);
+            int32_t src_h = lv_area_get_height(area);
+            lv_draw_sw_rotate(px_map, sg_rotate_buf, src_w, src_h, src_stride, dest_stride, rotation, cf);
+            /*Use the rotated area and rotated buffer from now on*/
+
+            color_ptr = sg_rotate_buf;
+            target_area = &rotated_area;
+        }
+
+        width = lv_area_get_width(target_area);
+
+        offset = (target_area->y1 * LV_HOR_RES + target_area->x1) * BYTE_PER_PIXEL;
+        for (y = target_area->y1; y <= target_area->y2 && y < LV_VER_RES; y++) {
             memcpy(disp_buf + offset, color_ptr, width * BYTE_PER_PIXEL);
             offset += LV_HOR_RES * BYTE_PER_PIXEL; // Move to the next line in the display buffer
             color_ptr += width * BYTE_PER_PIXEL;

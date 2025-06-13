@@ -22,6 +22,7 @@
 #define BOARD_LCD_WIDTH              240
 #define BOARD_LCD_HEIGHT             240
 #define BOARD_LCD_PIXELS_FMT         TUYA_PIXEL_FMT_RGB565
+#define BOARD_LCD_ROTATION           TUYA_DISPLAY_ROTATION_0
 
 #define BOARD_LCD_SPI_PORT           TUYA_SPI_NUM_0
 #define BOARD_LCD_SPI_CLK            48000000

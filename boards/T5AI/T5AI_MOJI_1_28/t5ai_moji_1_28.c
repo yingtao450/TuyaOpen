@@ -32,6 +32,7 @@
 #define BOARD_LCD_WIDTH              240
 #define BOARD_LCD_HEIGHT             240
 #define BOARD_LCD_PIXELS_FMT         TUYA_PIXEL_FMT_RGB565
+#define BOARD_LCD_ROTATION           TUYA_DISPLAY_ROTATION_0
 
 #define BOARD_LCD_SPI_PORT           TUYA_SPI_NUM_0
 #define BOARD_LCD_SPI_CLK            48000000
@@ -134,6 +135,8 @@ static OPERATE_RET __board_register_display(void)
     display_cfg.width     = BOARD_LCD_WIDTH;
     display_cfg.height    = BOARD_LCD_HEIGHT;
     display_cfg.pixel_fmt = BOARD_LCD_PIXELS_FMT;
+    display_cfg.rotation  = BOARD_LCD_ROTATION;
+
     display_cfg.port      = BOARD_LCD_SPI_PORT;
     display_cfg.spi_clk   = BOARD_LCD_SPI_CLK;
     display_cfg.cs_pin    = BOARD_LCD_SPI_CS_PIN;

@@ -43,7 +43,7 @@ const uint8_t cST7789_INIT_SEQ[] = {
     0                          // Terminate list
 };
 
-static TDD_DISP_SPI_CFG_T sg_disp_rgb = {
+static TDD_DISP_SPI_CFG_T sg_disp_spi_cfg = {
     .cfg = {
         .cmd_caset = ST7789_CASET,
         .cmd_raset = ST7789_RASET,
@@ -64,17 +64,18 @@ OPERATE_RET tdd_disp_spi_st7789_register(char *name, DISP_SPI_DEVICE_CFG_T *dev_
 
     PR_NOTICE("tdd_disp_spi_st7789_register: %s", name);
 
-    sg_disp_rgb.cfg.width     = dev_cfg->width;
-    sg_disp_rgb.cfg.height    = dev_cfg->height;
-    sg_disp_rgb.cfg.pixel_fmt = dev_cfg->pixel_fmt;
-    sg_disp_rgb.cfg.port      = dev_cfg->port;
-    sg_disp_rgb.cfg.spi_clk   = dev_cfg->spi_clk;
-    sg_disp_rgb.cfg.cs_pin    = dev_cfg->cs_pin;
-    sg_disp_rgb.cfg.dc_pin    = dev_cfg->dc_pin;
-    sg_disp_rgb.cfg.rst_pin   = dev_cfg->rst_pin;
+    sg_disp_spi_cfg.cfg.width     = dev_cfg->width;
+    sg_disp_spi_cfg.cfg.height    = dev_cfg->height;
+    sg_disp_spi_cfg.cfg.pixel_fmt = dev_cfg->pixel_fmt;
+    sg_disp_spi_cfg.cfg.port      = dev_cfg->port;
+    sg_disp_spi_cfg.cfg.spi_clk   = dev_cfg->spi_clk;
+    sg_disp_spi_cfg.cfg.cs_pin    = dev_cfg->cs_pin;
+    sg_disp_spi_cfg.cfg.dc_pin    = dev_cfg->dc_pin;
+    sg_disp_spi_cfg.cfg.rst_pin   = dev_cfg->rst_pin;
+    sg_disp_spi_cfg.rotation      = dev_cfg->rotation;
 
-    memcpy(&sg_disp_rgb.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
-    memcpy(&sg_disp_rgb.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
+    memcpy(&sg_disp_spi_cfg.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
+    memcpy(&sg_disp_spi_cfg.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
 
-    return tdl_disp_spi_device_register(name, &sg_disp_rgb);
+    return tdl_disp_spi_device_register(name, &sg_disp_spi_cfg);
 }

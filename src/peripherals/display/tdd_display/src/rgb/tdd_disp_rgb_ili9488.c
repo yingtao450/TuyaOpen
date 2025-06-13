@@ -88,6 +88,7 @@ OPERATE_RET tdd_disp_rgb_ili9488_register(char *name, DISP_RGB_DEVICE_CFG_T *dev
     sg_disp_rgb.cfg.width     = dev_cfg->width;
     sg_disp_rgb.cfg.height    = dev_cfg->height;
     sg_disp_rgb.cfg.pixel_fmt = dev_cfg->pixel_fmt;
+    sg_disp_rgb.rotation      = dev_cfg->rotation;
 
     memcpy(&sg_disp_rgb.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
     memcpy(&sg_disp_rgb.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));

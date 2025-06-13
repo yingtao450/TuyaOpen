@@ -17,11 +17,20 @@ if (CONFIG_ENABLE_SPI STREQUAL "y")
     file(GLOB_RECURSE tdd_disp_spi_srcs "${MODULE_PATH}/tdd_display/src/spi/*.c")
 endif()
 
+if (CONFIG_ENABLE_QSPI STREQUAL "y")
+    file(GLOB_RECURSE tdd_disp_qspi_srcs "${MODULE_PATH}/tdd_display/src/qspi/*.c")
+endif()
+
 if (CONFIG_ENABLE_RGB STREQUAL "y")   
     file(GLOB_RECURSE tdd_disp_rgb_srcs "${MODULE_PATH}/tdd_display/src/rgb/*.c")
 endif()
 
-set(LIB_SRCS ${disp_srcs} ${tdd_disp_spi_srcs} ${tdd_disp_rgb_srcs})
+if (CONFIG_ENABLE_MCU8080 STREQUAL "y")   
+    file(GLOB_RECURSE tdd_disp_8080_srcs "${MODULE_PATH}/tdd_display/src/mcu8080/*.c")
+endif()
+
+
+set(LIB_SRCS ${disp_srcs} ${tdd_disp_spi_srcs} ${tdd_disp_qspi_srcs} ${tdd_disp_rgb_srcs} ${tdd_disp_8080_srcs})
 
 # LIB_PUBLIC_INC
 set(LIB_PUBLIC_INC 
