@@ -110,6 +110,8 @@ void lv_port_disp_init(char *device)
             lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
         }
 
+        PR_NOTICE("rotation:%d", sg_display_info.rotation);
+
         sg_rotate_buf = __disp_draw_buf_align_alloc(buf_len);
         if (sg_rotate_buf == NULL) {
             PR_ERR("lvgl rotate buffer malloc fail!\n");
@@ -183,11 +185,7 @@ static uint8_t *__disp_draw_buf_align_alloc(uint32_t size_bytes)
 
 static void disp_deinit(void)
 {
-    // // if (lv_vendor_display_frame_cnt() == 2 || lv_vendor_draw_buffer_cnt() == 2) {
-    // //     tkl_lvgl_dma2d_deinit();
-    // // }
 
-    // tkl_lvgl_display_frame_deinit();
 }
 
 volatile bool disp_flush_enabled = true;
@@ -235,6 +233,7 @@ static void disp_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px
             lv_color_format_t cf = lv_display_get_color_format(disp);
             /*Calculate the position of the rotated area*/
             lv_display_rotate_area(disp, &rotated_area);
+
             /*Calculate the source stride (bytes in a line) from the width of the area*/
             uint32_t src_stride = lv_draw_buf_width_to_stride(lv_area_get_width(area), cf);
             /*Calculate the stride of the destination (rotated) area too*/
@@ -243,6 +242,7 @@ static void disp_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px
             
             int32_t src_w = lv_area_get_width(area);
             int32_t src_h = lv_area_get_height(area);
+
             lv_draw_sw_rotate(px_map, sg_rotate_buf, src_w, src_h, src_stride, dest_stride, rotation, cf);
             /*Use the rotated area and rotated buffer from now on*/
 
@@ -252,10 +252,10 @@ static void disp_flush(lv_display_t * disp, const lv_area_t * area, uint8_t * px
 
         width = lv_area_get_width(target_area);
 
-        offset = (target_area->y1 * LV_HOR_RES + target_area->x1) * BYTE_PER_PIXEL;
-        for (y = target_area->y1; y <= target_area->y2 && y < LV_VER_RES; y++) {
+        offset = (target_area->y1 * sg_display_info.width + target_area->x1) * BYTE_PER_PIXEL;
+        for (y = target_area->y1; y <= target_area->y2 && y < sg_display_info.height; y++) {
             memcpy(disp_buf + offset, color_ptr, width * BYTE_PER_PIXEL);
-            offset += LV_HOR_RES * BYTE_PER_PIXEL; // Move to the next line in the display buffer
+            offset += sg_display_info.width * BYTE_PER_PIXEL; // Move to the next line in the display buffer
             color_ptr += width * BYTE_PER_PIXEL;
         }
 
